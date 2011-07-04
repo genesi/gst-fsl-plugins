@@ -1,0 +1,373 @@
+gst-fsl-plugin (2.0.1-1) natty; urgency=low
+
+  * Update to 2.0.1 to fix ltib build conflict
+
+ -- Multimedia Team <shmmmw@freescale.com>  Thu, 23 May 2011 12:08:45 +0000
+
+gst-fsl-plugin (2.0.0-1) natty; urgency=low
+
+  * New upstream release
+
+ -- Multimedia Team <shmmmw@freescale.com>  Thu, 31 Mar 2011 12:08:45 +0000
+
+gst-fsl-plugin (1.9.8-0ubuntu0+ppa1) natty; urgency=low
+
+  * New upstream release
+
+ -- Ying-Chun Liu (PaulLiu) <paulliu@debian.org>  Mon, 28 Mar 2011 09:31:55 +0000
+
+gst-fsl-plugin (1.9.7-0ubuntu0+ppa1) natty; urgency=low
+
+  * New upstream release
+
+ -- Ying-Chun Liu (PaulLiu) <paulliu@debian.org>  Mon, 14 Mar 2011 06:47:37 +0000
+
+gst-fsl-plugin (1.9.5-0ubuntu0+ppa1) natty; urgency=low
+
+  * [Multimedia Team <shmmmw@freescale.com> Thu, 25 Oct 2010 00:00:00 +0800]
+    - mfw_ac3decoder: Fix error memory free issue.
+    - aiurdemux: Bug fix ac3 6 channel no sound issue
+
+ -- Ying-Chun Liu (PaulLiu) <paulliu@debian.org>  Thu, 25 Oct 2010 11:11:11 +0800
+
+gst-fsl-plugin (1.9.4-2) unstable; urgency=low
+
+  * mfw_vpuencoder: update the parameter settings to avoid mosaic issue.
+  * mfw_vpudecoder: Bug fix and change the default output format to NV12.
+  * aiurdemux: Fix the VPU_Init failure issue in AVI demuxer, fix the field issue.
+  * aiurdemux: Add the codec name taglist information.
+  * mfw_wmvdecoder: Correct frame rate in caps and buffer duration.
+  * aiurdemux: Add AMR audio support.
+  * mfw_mp3decoder: Omit scale factor error
+  * mfw_vpudecoder: In streaming mode, set the min_data_in_vpu to the max input buffer size.
+
+ -- Multimedia Team <shmmmw@freescale.com>  Thu, 25 Oct 2010 00:00:00 +0800
+
+gst-fsl-plugin (1.9.4-1) unstable; urgency=low
+
+  * Update version to 1.9.4.
+
+ -- Multimedia Team <shmmmw@freescale.com>  Thu, 30 Sep 2010 00:00:00 +0800
+
+gst-fsl-plugin (1.9.3-3) unstable; urgency=low
+
+  * mfw_wmvdecoder: correct video resolution and cropping.
+  * mfw_aacdecoder: correct audio playback sample rate.
+  * mfw_aacplusdecoder: correct audio playback sample rate.
+
+ -- Multimedia Team <shmmmw@freescale.com>  Fri, 17 Sep 2010 00:00:00 +0800
+
+gst-fsl-plugin (1.9.3-2) unstable; urgency=low
+
+  * mfw_vpudecoder: update for vpu firmware 1.4.14.
+  * mfw_vpuencoder: update for vpu firmware 1.4.14, add input crop function.
+
+ -- Multimedia Team <shmmmw@freescale.com>  Fri, 10 Sep 2010 00:00:00 +0800
+
+gst-fsl-plugin (1.9.3-1) unstable; urgency=low
+
+  * Change version to 1.9.3.
+  * mfw_vpudecoder: add aspect ratio information.
+
+ -- Multimedia Team <shmmmw@freescale.com>  Fri, 3 Sep 2010 00:00:00 +0800
+
+gst-fsl-plugin (1.9.2-3) unstable; urgency=low
+
+  * aiurdemux: fix SW decoder A/V sync issue and memory buffer allocate issue
+  * mfw_v4lsrc: Apply GstMfwBuffer, Add device setting.
+  * mfw_vpuencoder: Add 720p support.
+  * mfw_vpudecoder: Optimize the threshold value of SFD.
+
+ -- Multimedia Team <shmmmw@freescale.com>  Fri, 20 Aug 2010 00:00:00 +0800
+
+gst-fsl-plugin (1.9.2-2) unstable; urgency=low
+
+  * mfw_h264decoder: Fix for key frame search flag condition, sfd flag issue.
+  * mfw_mp4aspdecoder: Fix for key frame search flag condition, sfd flag issue.
+  * mfw_mp4aspdecoder: Fix for key frame search flag condition, sfd flag issue.
+
+ -- Multimedia Team <shmmmw@freescale.com>  Mon, 16 Aug 2010 00:00:00 +0800
+
+gst-fsl-plugin (1.9.2-1) unstable; urgency=low
+
+  * aiurdemux: Integrated asf demuxer, correct subcodec setting for VC1.
+  * aiurdemux: Add env setting for max streams of audio,video and subtitle.
+
+ -- Multimedia Team <shmmmw@freescale.com>  Thu, 12 Aug 2010 00:00:00 +0800
+
+gst-fsl-plugin (1.9.1-1) unstable; urgency=low
+
+  * Update to 1.9.1
+
+ -- Multimedia Team <shmmmw@freescale.com>  Wed, 4 Aug 2010 00:00:00 +0800
+
+gst-fsl-plugin (1.9.0-2) unstable; urgency=low
+
+  * aiurdemux: Fix mpeg2 same timestamp jitter issue.
+
+ -- Multimedia Team <shmmmw@freescale.com>  Fri, 23 July 2010 00:00:00 +0800
+
+gst-fsl-plugin (1.9.0-1) unstable; urgency=low
+
+  * mfw_vpudecoder: Fix the mpeg2 seek hang issue.
+  * mfw_mp3decoder: Fix the gst_adapter_flush error.
+  * aiurdemux: Fix no audio issue for some streams with aac audio.
+
+ -- Multimedia Team <shmmmw@freescale.com>  Fri, 16 July 2010 00:00:00 +0800
+
+gst-fsl-plugin (1.8.1-6) unstable; urgency=low
+
+  * aiurdemux: fix ogg playback fail issue.
+  * aiurdemux: fix hung when seek to near end of stream for some mpg2 streams.
+  * mfw_vpudecoder: fix video jitter for some mpg2 and mkv streams.
+  * mfw_vpudecoder, mfw_h264decoder: update to support h264 NAL-format codec-data.
+  * mfw_vpudecoder: set default output format to I420.
+
+ -- Multimedia Team <shmmmw@freescale.com>  Fri, 9 July 2010 00:00:00 +0800
+
+gst-fsl-plugin (1.8.1-5) unstable; urgency=low
+
+  * Fix bugs with aiur demux
+  * Fix isink segment fault when illegal display name specified.
+  * Fix wma10 decoder input buffer ensure integral number of block size
+
+ -- Sario HU <b01138@freescale.com>  Fri, 2 July 2010 18:24:03 +0800
+
+gst-fsl-plugin (1.8.1-4) unstable; urgency=low
+
+  * Fix the "Flash" issue at the begining of display.
+  * Update VPU decoder plugin to adapter VPU firmware 1.3.10 change.
+  * Refine the video caps to compatible with Totem player.
+
+ -- Dexter JI <b01140@freescale.com>  Fri, 25 June 2010 20:24:03 +0800
+
+gst-fsl-plugin (1.8.1-3) unstable; urgency=low
+
+  * Fix bugs with aiur demux
+  * Add flv, ogg support in aiur demux
+  * Add config file for isink to support different cases for dual display
+
+ -- Sario HU <b01138@freescale.com>  Tue, 22 Jun 2010 12:24:03 +0800
+
+gst-fsl-plugin (1.8.1-2) unstable; urgency=low
+
+  * Add aiur(unified parser plugin).
+
+ -- Sario HU <b01138@freescale.com>  Mon, 7 Jun 2010 12:24:03 +0800
+
+gst-fsl-plugin (1.8.1-1) unstable; urgency=low
+
+  * Fix the video resolution display wrong issue.
+
+ -- Sario HU <b01138@freescale.com>  Fri, 4 Jun 2010 12:24:03 +0800
+
+gst-fsl-plugin (1.8.0-1) unstable; urgency=low
+
+  * Update VPU decoder plugin to support firmware 1.3.10.
+  * Enable the frame dropping strategy as default in VPU decoder plugin.
+
+ -- Dexter JI <b01140@freescale.com>  Fri, 14 May 2010 20:24:03 +0800
+
+gst-fsl-plugin (1.7.3-8) unstable; urgency=low
+
+  * Change isink output format on TV to YUYV
+  * Add multi-overlay subtitle support.
+  * Fix video not show for seconds when playback some video clips.
+  * Fix the VPU lost I frame issue after seeking.
+
+ -- Sario Hu <b01138@freescale.com>  Fri, 23 Apr 2010 16:24:03 +0800
+
+gst-fsl-plugin (1.7.3-7) unstable; urgency=low
+
+  * Clear old display field after isink windows move or resize, the background is clean now.
+  * Remove sleep after flip in isink, performance for video display improved.
+  * Add text based subtitle support in isink, totem support subtitle now.
+
+ -- Sario Hu <b01138@freescale.com>  Fri, 16 Apr 2010 12:24:03 +0800
+
+gst-fsl-plugin (1.7.3-6) unstable; urgency=low
+
+  * Add Vorbis decoder plugin.
+  * Add AVI H263 media support.
+  * Fix V4L plugin rotate setting issue.
+  * Fix Flash issue during resize with multi-instance case.
+
+ -- Lyon Wang <b12696@freescale.com>  Fri, 2 Apr 2010 20:24:03 +0800
+
+gst-fsl-plugin (1.7.3-5) unstable; urgency=low
+
+  * Update FSL V4L SRC to support rotate and display BG/FG mode.
+
+ -- Dexter JI <b01140@freescale.com>  Fri, 26 Mar 2010 20:24:03 +0800
+
+gst-fsl-plugin (1.7.3-3) unstable; urgency=low
+
+  * Update VPU decoder to separate the core operation to individual thread.
+  * Add framdrop property in VPU decoder plugin to support B&P frame dropping.
+  * Support ASF streaming via http protocol.
+  * Updated totem to support speed control.
+
+ -- Dexter Ji <b01140@freescale.com>  Fri, 18 Mar 2010 20:24:03 +0800
+
+gst-fsl-plugin (1.7.3-2) unstable; urgency=low
+
+  * Fix mp4/avi parser plugin failed when audio/video not support.
+  * Updated gplay.
+
+ -- Sario Hu <b01138@freescale.com>  Mon, 15 Mar 2010 10:38:00 +0800
+
+gst-fsl-plugin (1.7.3-1) unstable; urgency=low
+
+  * Add TV-out support in isink.
+  * Change vpu and isink plugins to use gstmfwbuffer instead of gstbuffer to optimize performance.
+  * Add support libs vss(video surface service) and hbuf_alloc(hw buffer allocator base on ipu device).
+
+ -- Sario Hu <b01138@freescale.com>  Fri, 05 Mar 2010 15:00:00 +0800
+
+gst-fsl-plugin (1.7.2-3) unstable; urgency=low
+
+  * Update the isink to support YUYV format.
+  * Add expose event handle in isink.
+  * Fix bugs for video hung after seek.
+  * Integrated new mp4 demuxer core.
+
+ -- Sario Hu <b01138@freescale.com>  Wed, 28 Jan 2010 14:00:00 +0800
+
+gst-fsl-plugin (1.7.2-2) unstable; urgency=low
+
+  * Update the v4lsink to support YUYV format.
+  * Update the mp3 encoder plugin to fix the change state issue.
+  * Resolve buffer management bugs in vpu decoder plugin.
+  * Fix bugs in isink plugin.
+
+ -- Dexter Ji <b01140@freescale.com>  Fri, 22 Jan 2010 20:24:03 +0800
+
+gst-fsl-plugin (1.7.2-1) unstable; urgency=low
+
+  * Add tag list in avi plugin.
+  * Add IPUlib-based csc plugin.
+  * Add IPUlib-based sink plugin.
+
+ -- Sario Hu <b01138@freescale.com>  Fri, 15 Jan 2010 20:24:03 +0800
+
+gst-fsl-plugin (1.7.1-6) unstable; urgency=low
+
+  * Fix segfault with some mpeg2 clips.
+  * Fix audio/video drop after seek for some clips.
+  * Switch backend of gplay to playbin.
+
+ -- Sario Hu <b01138@freescale.com>  Fri, 25 Dec 2009 18:30:00 +0800
+
+gst-fsl-plugin (1.7.1-5) unstable; urgency=low
+
+  * Fix segfault with some h264 clips.
+  * Fix segfault when seek frequently with mpeg2 clips
+  * Fix prerolling can not finished with mp3 audio clips.
+  * Fix segfault when open new file while in pause state.
+  * Fix vpu enc with error codec_data filed with mpeg4 format
+  * Fix sound error with multi-channel aac clips.
+  * Fix video hung when frequently seek with asf clips.
+  * Fix video mosaic after seek with some clips.
+  * Fix video will flash when start playback or resize totem window size.
+
+ -- Sario Hu <b01138@freescale.com>  Fri, 18 Dec 2009 15:10:00 +0800
+
+gst-fsl-plugin (1.7.1-4) unstable; urgency=low
+
+  * Fix issues for repeat fatal error
+  * Fix memory leakage in vpu plugin.
+  * Add accurate seek support in mp4 and avi.
+
+ -- Sario Hu <b01138@freescale.com>  Fri, 04 Dec 2009 14:00:00 +0800
+
+gst-fsl-plugin (1.7.1-3) unstable; urgency=low
+
+  * Add gplay test application (cli based).
+  * resolve segmentation fault for seek on non-audio mp4 bitstream.
+
+ -- Sario Hu <b01138@freescale.com>  Fri, 27 Nov 2009 14:42:03 +0800
+
+gst-fsl-plugin (1.7.1-2) unstable; urgency=low
+
+  * RM related bug fix.
+
+ -- Sario Hu <b01138@freescale.com>  Fri, 20 Nov 2009 14:42:03 +0800
+
+gst-fsl-plugin (1.7.1-1) unstable; urgency=low
+
+  * Update to 1.7.1.
+
+ -- Sario Hu <b01138@freescale.com>  Mon, 9 Nov 2009 02:20:03 +0800
+
+gst-fsl-plugin (1.7.0-1) unstable; urgency=low
+  * Update to 1.7.0.
+
+ -- Sario Hu <b01138@freescale.com>  Mon, 9 Nov 2009 02:20:03 +0800
+
+gst-fsl-plugin (1.6.2-1) unstable; urgency=low
+
+  * Update v4l src plugin to fix the compatible with BSP release.
+
+ -- Dexter Ji <b01140@freescale.com>  Wed, 30 Sep 2009 02:20:03 +0800
+
+gst-fsl-plugin (1.6.1-4) unstable; urgency=low
+
+  * Add Audio and Video encoder plugins.
+
+ -- Dexter Ji <b01140@freescale.com>  Wed, 30 Sep 2009 02:20:03 +0800
+
+gst-fsl-plugin (1.6.1-2) unstable; urgency=low
+
+  * Set seekable flag in ASF demuxer.
+
+ -- Dexter Ji <b01140@freescale.com>  Thurs, 17 Sep 2009 02:20:03 +0800
+
+gst-fsl-plugin (1.6.1-1) unstable; urgency=low
+
+  * Remove aacplus plugin.
+
+ -- Dexter Ji <b01140@freescale.com>  Sat, 5 Sep 2009 02:20:03 +0800
+
+gst-fsl-plugin (1.6.1-0) unstable; urgency=low
+
+  * Fix MPG demuxer memory leakage issue.
+
+ -- Dexter Ji <b01140@freescale.com>  Sat, 5 Sep 2009 02:20:03 +0800
+
+gst-fsl-plugin (1.6.0-1) unstable; urgency=low
+
+  * Fix ASF demuxer seek without preload issue.
+
+ -- Dexter Ji <b01140@freescale.com>  Fri, 28 Aug 2009 02:20:03 +0800
+
+gst-fsl-plugin (1.6.0-0) unstable; urgency=low
+
+  * Update Audio codec plugins.
+
+ -- Dexter Ji <b01140@freescale.com>  Fri, 21 Aug 2009 02:20:03 +0800
+
+gst-fsl-plugin (1.5.2-14) unstable; urgency=low
+
+  * Update AAC, AACPlus and MP3 decoder.
+
+ -- Dexter Ji <b01140@freescale.com>  Fri, 24 Jul 2009 02:20:03 +0800
+
+gst-fsl-plugin (1.5.2-6) unstable; urgency=low
+
+  * Fix the mono abnormal issue in mfw_mp3encoder.
+  * Fix several AACLC streams error in mfw_aacdecoder.
+  * Fix the MPEG2 clip freeze serioully issue in mfw_vpudecoder.
+
+ -- Dexter Ji <b01140@freescale.com>  Mon, 22 Jun 2009 12:55:00 +0800
+
+gst-fsl-plugin (1.5.1-14) unstable; urgency=low
+
+  * Update the audio codecs.
+
+ -- Dexter Ji <b01140@freescale.com>  Tues, 07 May 2009 14:38:00 -0500
+
+gst-fsl-plugin (1.5.1-1) unstable; urgency=low
+
+  * Initial release
+
+ -- root <b01138@freescale.com>  Wed, 08 Apr 2009 21:38:25 -0500

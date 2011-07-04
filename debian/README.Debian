@@ -1,0 +1,36 @@
+gst-fsl-plugin for Debian
+----------
+
+One errata was published for MX53 TO2.0 VPU:
+ ENGcm11856 IPU and VPU may present some artifacts when running at 200Mhz
+
+Description:
+ Due to a memory timing problem on memories used in the i.MX53 IPU and VPU,
+ these blocks
+ may miscalculate incoming data for decoding. The problem occurs when
+ the IPU and VPU are
+ running at max frequency of 200Mhz..
+
+Projected Impact:
+ Some artifacts may be seen on the decoded image.
+
+Workarounds:
+ None
+
+Proposed Solution:
+ Planned to be fixed in i.MX53 revision 2.1.
+
+Since your TO2.0 boards are not screened before, you may meet above
+issues when using the boards.
+
+You can try the following method to identify whether it’s the same issue:
+
+1. Increase VCC voltage as 1.35V. The following u-boot commands can achieve it:
+i2c mw 0x48 0x2f 0x62
+i2c mw 0x48 0x3c 0x62
+
+
+2. Or reduce peripher clock just like the below in U-Boot:
+clk periph 330
+
+ -- Ying-Chun Liu (PaulLiu) <paul.liu@linaro.org>  Wed, 06 Apr 2011 14:22:31 +0800

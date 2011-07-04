@@ -1,0 +1,8 @@
+usr/lib/lib*.a
+usr/lib/*.so
+usr/lib/gstreamer-0.10/*.a
+#libs/gst_buffer/src/*.h usr/include/gstreamer-0.10/gst/fsl
+libs/gstbufmeta/*.h usr/include/gstreamer-0.10/gst/fsl
+libs/me/*.h usr/include/gstreamer-0.10/gst/fsl
+libs/sconf/*.h usr/include/gstreamer-0.10/gst/fsl
+libs/vss/*.h usr/include/gstreamer-0.10/gst/fsl

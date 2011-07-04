@@ -1,0 +1,5 @@
+usr/lib/*.so.*
+usr/share
+usr/bin/gplay usr/lib/gst-fsl-plugins-lib
+#usr/lib/pm-utils/totemsuspend.pl usr/lib/pm-utils
+#usr/lib/pm-utils/sleep.d/97v4l usr/lib/pm-utils/sleep.d

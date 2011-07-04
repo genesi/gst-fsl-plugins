@@ -1,0 +1,49 @@
+Source: gst-fsl-plugin
+Section: libs
+Priority: extra
+Maintainer: Sario Hu <b01138@freescale.com>
+Uploaders: Ying-Chun Liu (PaulLiu) <paul.liu@linaro.org>
+Build-Depends: debhelper (>= 7), cdbs, autotools-dev, multimedia-core-imx-dev,
+               dh-autoreconf, libgstreamer0.10-dev, gstreamer-tools,
+               autoconf, automake, libtool,
+               libgstreamer-plugins-base0.10-dev
+Standards-Version: 3.9.1
+Homepage: http://www.freescale.com
+
+Package: gstreamer0.10-fsl-mm-plugins
+Section: video
+Architecture: armel
+Depends: ${shlibs:Depends}, ${misc:Depends}
+XB-GStreamer-Version: ${gstreamer:Version}
+XB-GStreamer-Elements: ${gstreamer:Elements}
+XB-GStreamer-URI-Sources: ${gstreamer:URISources}
+XB-GStreamer-URI-Sinks: ${gstreamer:URISinks}
+XB-GStreamer-Encoders: ${gstreamer:Encoders}
+XB-GStreamer-Decoders: ${gstreamer:Decoders}
+Description: Freescale Multimedia Gstreamer Plugin for GStreamer.
+ This GStreamer plugin supports a large number of audio/video compression
+ formats. The codecs are accelerated by Freescale IMX SoC.
+
+Package: libgst-fsl-plugins0
+Section: libs
+Architecture: armel
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Freescale Multimedia Gstreamer Plugin libraries.
+ This is the library for development Freescale Multimedia Gstreamer Plugin.
+
+Package: libgst-fsl-plugins-dev
+Section: libdevel
+Architecture: armel
+Depends: libgst-fsl-plugins0 (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
+Description: Freescale Multimedia Gstreamer Plugin libraries.
+ This is the library for development Freescale Multimedia Gstreamer Plugin.
+ .
+ This package contains the development headers.
+
+Package: libgst-fsl-plugins-tools
+Section: utils
+Architecture: armel
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Freescale Multimedia Gstreamer Utils.
+ This is the library for development Freescale Multimedia Gstreamer Plugin.
+ This package contains the development utils.
