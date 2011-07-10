@@ -7,11 +7,12 @@ include /usr/share/cdbs/1/rules/utils.mk
 
 DEB_DH_AUTORECONF_ARGS := $(CURDIR)/autogen.sh --
 DEB_CONFIGURE_EXTRA_FLAGS := PLATFORM=MX51 BUILDER=LTIB VERSION=2.0.1-1 \
-                             PACKAGE=gst-fsl-plugin \
-                             IPU_CFLAGS="-I/usr/include -I/usr/src/linux/include -I/usr/src/linux-headers-2.6.38-1000-linaro-lt-mx5/include/" \
-                             IPU_LIBS=-lipu \
-                             VPU_CFLAGS="-I/usr/include -I/usr/src/linux/include -I/usr/src/linux-headers-2.6.38-1000-linaro-lt-mx5/include/" \
-                             VPU_LIBS=-lvpu 
+	PACKAGE=gst-fsl-plugin \
+	--disable-aac_dec --disable-aacp_dec --disable-bsac_dec --disable-mp3_dec \
+	--disable-mp3_enc --disable-vorbis_dec --disable-wam10_dec --disable-downmix \
+	--disable-wma8_enc --disable-ac3_dec --disable-h264_dec --disable-mpeg4_dec \
+	--disable-mpeg2_dec --disable-wmv9mp_dec --disable-wmv78_dec
+
 
 binary-install/libgst-fsl-plugins::
 	chmod a+x debian/gst-fsl-plugins-lib/usr/lib/pm-utils/totemsuspend.pl
