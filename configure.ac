@@ -536,6 +536,7 @@ src/video/deinterlace/src/Makefile
 src/parser/aiur/src/Makefile
 src/misc/v4l_source/src/Makefile
 src/misc/v4l_sink/src/Makefile
+src/misc/xvimage/Makefile
 src/misc/i_sink/src/Makefile
 tools/Makefile
 tools/gplay/Makefile)

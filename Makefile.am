@@ -619,7 +619,8 @@ BASEDIRS = src/audio/audio_pp/src      \
 		src/video/deinterlace/src   \
 		src/parser/aiur/src         \
 		src/misc/v4l_source/src     \
-		src/misc/v4l_sink/src 
+		src/misc/v4l_sink/src     \
+		src/misc/xvimage
 
 if USE_AAC_DEC
 AACDEC_DIR =    \
@@ -868,7 +869,8 @@ BASEDIRS = src/audio/audio_pp/src      \
 		src/video/deinterlace/src   \
 		src/parser/aiur/src         \
 		src/misc/v4l_source/src     \
-		src/misc/v4l_sink/src    
+		src/misc/v4l_sink/src      \
+		src/misc/xvimage
 
 if USE_AAC_DEC
 AACDEC_DIR =    \
