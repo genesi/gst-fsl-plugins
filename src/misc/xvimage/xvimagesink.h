@@ -49,9 +49,9 @@ G_BEGIN_DECLS
 #define GST_TYPE_XVIMAGESINK \
   (gst_xvimagesink_get_type())
 #define GST_XVIMAGESINK(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST((obj), GST_TYPE_XVIMAGESINK, GstXvImageSink))
+  (G_TYPE_CHECK_INSTANCE_CAST((obj), GST_TYPE_XVIMAGESINK, MfwXvImageSink))
 #define GST_XVIMAGESINK_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST((klass), GST_TYPE_XVIMAGESINK, GstXvImageSinkClass))
+  (G_TYPE_CHECK_CLASS_CAST((klass), GST_TYPE_XVIMAGESINK, MfwXvImageSinkClass))
 #define GST_IS_XVIMAGESINK(obj) \
   (G_TYPE_CHECK_INSTANCE_TYPE((obj), GST_TYPE_XVIMAGESINK))
 #define GST_IS_XVIMAGESINK_CLASS(klass) \
@@ -59,12 +59,12 @@ G_BEGIN_DECLS
 
 typedef struct _GstXContext GstXContext;
 typedef struct _GstXWindow GstXWindow;
-typedef struct _GstXvImageFormat GstXvImageFormat;
-typedef struct _GstXvImageBuffer GstXvImageBuffer;
-typedef struct _GstXvImageBufferClass GstXvImageBufferClass;
+typedef struct _MfwXvImageFormat MfwXvImageFormat;
+typedef struct _MfwXvImageBuffer MfwXvImageBuffer;
+typedef struct _MfwXvImageBufferClass MfwXvImageBufferClass;
 
-typedef struct _GstXvImageSink GstXvImageSink;
-typedef struct _GstXvImageSinkClass GstXvImageSinkClass;
+typedef struct _MfwXvImageSink MfwXvImageSink;
+typedef struct _MfwXvImageSinkClass MfwXvImageSinkClass;
 
 /*
  * GstXContext:
@@ -153,20 +153,20 @@ struct _GstXWindow {
 };
 
 /**
- * GstXvImageFormat:
+ * MfwXvImageFormat:
  * @format: the image format
  * @caps: generated #GstCaps for this image format
  *
  * Structure storing image format to #GstCaps association.
  */
-struct _GstXvImageFormat {
+struct _MfwXvImageFormat {
   gint format;
   GstCaps *caps;
 };
 
 /**
  * GstXImageBuffer:
- * @xvimagesink: a reference to our #GstXvImageSink
+ * @xvimagesink: a reference to our #MfwXvImageSink
  * @xvimage: the XvImage of this buffer
  * @width: the width in pixels of XvImage @xvimage
  * @height: the height in pixels of XvImage @xvimage
@@ -175,12 +175,12 @@ struct _GstXvImageFormat {
  *
  * Subclass of #GstBuffer containing additional information about an XvImage.
  */
-struct _GstXvImageBuffer {
+struct _MfwXvImageBuffer {
   GstBuffer   buffer;
   //GstBufferMeta buffer;
     
   /* Reference to the xvimagesink we belong to */
-  GstXvImageSink *xvimagesink;
+  MfwXvImageSink *xvimagesink;
 
   XvImage *xvimage;
 
@@ -193,13 +193,13 @@ struct _GstXvImageBuffer {
 };
 
 /**
- * GstXvImageSink:
+ * MfwXvImageSink:
  * @display_name: the name of the Display we want to render to
  * @xcontext: our instance's #GstXContext
  * @xwindow: the #GstXWindow we are rendering to
- * @xvimage: internal #GstXvImage used to store incoming buffers and render when
+ * @xvimage: internal #MfwXvImage used to store incoming buffers and render when
  * not using the buffer_alloc optimization mechanism
- * @cur_image: a reference to the last #GstXvImage that was put to @xwindow. It
+ * @cur_image: a reference to the last #MfwXvImage that was put to @xwindow. It
  * is used when Expose events are received to redraw the latest video frame
  * @event_thread: a thread listening for events on @xwindow and handling them
  * @running: used to inform @event_thread if it should run/shutdown
@@ -211,7 +211,7 @@ struct _GstXvImageBuffer {
  * events from @event_thread or methods from the #GstXOverlay interface
  * @par: used to override calculated pixel aspect ratio from @xcontext
  * @pool_lock: used to protect the buffer pool
- * @image_pool: a list of #GstXvImageBuffer that could be reused at next buffer
+ * @image_pool: a list of #MfwXvImageBuffer that could be reused at next buffer
  * allocation call
  * @synchronous: used to store if XSynchronous should be used or not (for
  * debugging purpose only)
@@ -226,9 +226,9 @@ struct _GstXvImageBuffer {
  * @video_width: the width of incoming video frames in pixels
  * @video_height: the height of incoming video frames in pixels
  *
- * The #GstXvImageSink data structure.
+ * The #MfwXvImageSink data structure.
  */
-struct _GstXvImageSink {
+struct _MfwXvImageSink {
   /* Our element stuff */
   GstVideoSink videosink;
 
@@ -237,8 +237,8 @@ struct _GstXvImageSink {
 
   GstXContext *xcontext;
   GstXWindow *xwindow;
-  GstXvImageBuffer *xvimage;
-  GstXvImageBuffer *cur_image;
+  MfwXvImageBuffer *xvimage;
+  MfwXvImageBuffer *cur_image;
 
   GThread *event_thread;
   gboolean running;
@@ -295,7 +295,7 @@ struct _GstXvImageSink {
   gboolean have_render_rect;
 };
 
-struct _GstXvImageSinkClass {
+struct _MfwXvImageSinkClass {
   GstVideoSinkClass parent_class;
 };
 

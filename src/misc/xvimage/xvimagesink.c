@@ -35,7 +35,7 @@
  * The XVideo extension, when it's available, handles hardware accelerated
  * scaling of video frames. This means that the element will just accept
  * incoming video frames no matter their geometry and will then put them to the
- * drawable scaling them on the fly. Using the #GstXvImageSink:force-aspect-ratio
+ * drawable scaling them on the fly. Using the #MfwXvImageSink:force-aspect-ratio
  * property it is possible to enforce scaling with a constant aspect ratio,
  * which means drawing black borders around the video frame.
  * </para>
@@ -58,7 +58,7 @@
  * <title>Pixel aspect ratio</title>
  * <para>
  * When changing state to GST_STATE_READY, XvImageSink will open a connection to
- * the display specified in the #GstXvImageSink:display property or the
+ * the display specified in the #MfwXvImageSink:display property or the
  * default display if nothing specified. Once this connection is open it will
  * inspect the display configuration including the physical display geometry and
  * then calculate the pixel aspect ratio. When receiving video frames with a
@@ -66,7 +66,7 @@
  * display the video frames correctly on display's pixel aspect ratio.
  * Sometimes the calculated pixel aspect ratio can be wrong, it is
  * then possible to enforce a specific pixel aspect ratio using the
- * #GstXvImageSink:pixel-aspect-ratio property.
+ * #MfwXvImageSink:pixel-aspect-ratio property.
  * </para>
  * </refsect2>
  * <refsect2>
@@ -78,7 +78,7 @@
  * video frames are scaled through hardware (no extra CPU cost).
  * |[
  * gst-launch -v videotestsrc ! xvimagesink force-aspect-ratio=true
- * ]| Same pipeline with #GstXvImageSink:force-aspect-ratio property set to true
+ * ]| Same pipeline with #MfwXvImageSink:force-aspect-ratio property set to true
  * You can observe the borders drawn around the scaled image respecting aspect
  * ratio.
  * |[
@@ -144,14 +144,14 @@ MotifWmHints, MwmHints;
 
 #define MWM_HINTS_DECORATIONS   (1L << 1)
 
-static void gst_xvimagesink_reset (GstXvImageSink * xvimagesink);
+static void gst_xvimagesink_reset (MfwXvImageSink * xvimagesink);
 
 static GstBufferClass *xvimage_buffer_parent_class = NULL;
-static void gst_xvimage_buffer_finalize (GstXvImageBuffer * xvimage);
+static void gst_xvimage_buffer_finalize (MfwXvImageBuffer * xvimage);
 
-static void gst_xvimagesink_xwindow_update_geometry (GstXvImageSink *
+static void gst_xvimagesink_xwindow_update_geometry (MfwXvImageSink *
     xvimagesink);
-static gint gst_xvimagesink_get_format_from_caps (GstXvImageSink * xvimagesink,
+static gint gst_xvimagesink_get_format_from_caps (MfwXvImageSink * xvimagesink,
     GstCaps * caps);
 static void gst_xvimagesink_expose (GstXOverlay * overlay);
 
@@ -204,8 +204,8 @@ static GstVideoSinkClass *parent_class = NULL;
 #define GST_TYPE_XVIMAGE_BUFFER (gst_xvimage_buffer_get_type())
 
 #define GST_IS_XVIMAGE_BUFFER(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GST_TYPE_XVIMAGE_BUFFER))
-#define GST_XVIMAGE_BUFFER(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_XVIMAGE_BUFFER, GstXvImageBuffer))
-#define GST_XVIMAGE_BUFFER_CAST(obj) ((GstXvImageBuffer *)(obj))
+#define GST_XVIMAGE_BUFFER(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_XVIMAGE_BUFFER, MfwXvImageBuffer))
+#define GST_XVIMAGE_BUFFER_CAST(obj) ((MfwXvImageBuffer *)(obj))
 
 #define IS_DMABLE_BUFFER(buffer) ( (GST_IS_BUFFER_META(buffer->_gst_reserved[G_N_ELEMENTS(buffer->_gst_reserved)-1])) \
                                  || ( GST_IS_BUFFER(buffer) \
@@ -214,11 +214,11 @@ static GstVideoSinkClass *parent_class = NULL;
                                         ((GstBufferMeta *)(buffer->_gst_reserved[G_N_ELEMENTS(buffer->_gst_reserved)-1]))->physical_data : \
                                         GST_BUFFER_OFFSET(buffer))
 
-/* This function destroys a GstXvImage handling XShm availability */
+/* This function destroys a MfwXvImage handling XShm availability */
 static void
-gst_xvimage_buffer_destroy (GstXvImageBuffer * xvimage)
+gst_xvimage_buffer_destroy (MfwXvImageBuffer * xvimage)
 {
-  GstXvImageSink *xvimagesink;
+  MfwXvImageSink *xvimagesink;
 
   GST_DEBUG_OBJECT (xvimage, "Destroying buffer");
 
@@ -294,9 +294,9 @@ no_sink:
 }
 
 static void
-gst_xvimage_buffer_finalize (GstXvImageBuffer * xvimage)
+gst_xvimage_buffer_finalize (MfwXvImageBuffer * xvimage)
 {
-  GstXvImageSink *xvimagesink;
+  MfwXvImageSink *xvimagesink;
   gboolean running;
 
   xvimagesink = xvimage->xvimagesink;
@@ -340,7 +340,7 @@ no_sink:
 }
 
 static void
-gst_xvimage_buffer_free (GstXvImageBuffer * xvimage)
+gst_xvimage_buffer_free (MfwXvImageBuffer * xvimage)
 {
   /* make sure it is not recycled */
   xvimage->width = -1;
@@ -349,7 +349,7 @@ gst_xvimage_buffer_free (GstXvImageBuffer * xvimage)
 }
 
 static void
-gst_xvimage_buffer_init (GstXvImageBuffer * xvimage, gpointer g_class)
+gst_xvimage_buffer_init (MfwXvImageBuffer * xvimage, gpointer g_class)
 {
 #ifdef HAVE_XSHM
   xvimage->SHMInfo.shmaddr = ((void *) -1);
@@ -381,13 +381,13 @@ gst_xvimage_buffer_get_type (void)
       gst_xvimage_buffer_class_init,
       NULL,
       NULL,
-      sizeof (GstXvImageBuffer),
+      sizeof (MfwXvImageBuffer),
       0,
       (GInstanceInitFunc) gst_xvimage_buffer_init,
       NULL
     };
     _gst_xvimage_buffer_type = g_type_register_static (GST_TYPE_BUFFER,
-        "GstXvImageBuffer", &xvimage_buffer_info, 0);
+        "MfwXvImageBuffer", &xvimage_buffer_info, 0);
   }
   return _gst_xvimage_buffer_type;
 }
@@ -522,11 +522,11 @@ void free_hwbuffer(gpointer data)
 }
 
 
-/* This function handles GstXvImage creation depending on XShm availability */
-static GstXvImageBuffer *
-gst_xvimagesink_xvimage_new (GstXvImageSink * xvimagesink, GstCaps * caps)
+/* This function handles MfwXvImage creation depending on XShm availability */
+static MfwXvImageBuffer *
+gst_xvimagesink_xvimage_new (MfwXvImageSink * xvimagesink, GstCaps * caps)
 {
-  GstXvImageBuffer *xvimage = NULL;
+  MfwXvImageBuffer *xvimage = NULL;
   GstStructure *structure = NULL;
   gboolean succeeded = FALSE;
   int (*handler) (Display *, XErrorEvent *);
@@ -536,7 +536,7 @@ gst_xvimagesink_xvimage_new (GstXvImageSink * xvimagesink, GstCaps * caps)
   if (caps == NULL)
     return NULL;
 
-  xvimage = (GstXvImageBuffer *) gst_mini_object_new (GST_TYPE_XVIMAGE_BUFFER);
+  xvimage = (MfwXvImageBuffer *) gst_mini_object_new (GST_TYPE_XVIMAGE_BUFFER);
   GST_DEBUG_OBJECT (xvimage, "Creating new XvImageBuffer");
 
   structure = gst_caps_get_structure (caps, 0);
@@ -762,7 +762,7 @@ beach_unlocked:
 
 /* We are called with the x_lock taken */
 static void
-gst_xvimagesink_xwindow_draw_borders (GstXvImageSink * xvimagesink,
+gst_xvimagesink_xwindow_draw_borders (MfwXvImageSink * xvimagesink,
     GstXWindow * xwindow, GstVideoRectangle rect)
 {
   gint t1, t2;
@@ -806,11 +806,11 @@ gst_xvimagesink_xwindow_draw_borders (GstXvImageSink * xvimagesink,
 
 //static GstClockTime current = 0, previous = 0;
 
-/* This function puts a GstXvImage on a GstXvImageSink's window. Returns FALSE
+/* This function puts a MfwXvImage on a MfwXvImageSink's window. Returns FALSE
  * if no window was available  */
 static gboolean
-gst_xvimagesink_xvimage_put (GstXvImageSink * xvimagesink,
-    GstXvImageBuffer * xvimage)
+gst_xvimagesink_xvimage_put (MfwXvImageSink * xvimagesink,
+    MfwXvImageBuffer * xvimage)
 {
   GstVideoRectangle result;
   gboolean draw_border = FALSE;
@@ -919,7 +919,7 @@ gst_xvimagesink_xvimage_put (GstXvImageSink * xvimagesink,
 }
 
 static gboolean
-gst_xvimagesink_xwindow_decorate (GstXvImageSink * xvimagesink,
+gst_xvimagesink_xwindow_decorate (MfwXvImageSink * xvimagesink,
     GstXWindow * window)
 {
   Atom hints_atom = None;
@@ -956,7 +956,7 @@ gst_xvimagesink_xwindow_decorate (GstXvImageSink * xvimagesink,
 }
 
 static void
-gst_xvimagesink_xwindow_set_title (GstXvImageSink * xvimagesink,
+gst_xvimagesink_xwindow_set_title (MfwXvImageSink * xvimagesink,
     GstXWindow * xwindow, const gchar * media_title)
 {
   if (media_title) {
@@ -999,7 +999,7 @@ gst_xvimagesink_xwindow_set_title (GstXvImageSink * xvimagesink,
 /* This function handles a GstXWindow creation
  * The width and height are the actual pixel size on the display */
 static GstXWindow *
-gst_xvimagesink_xwindow_new (GstXvImageSink * xvimagesink,
+gst_xvimagesink_xwindow_new (MfwXvImageSink * xvimagesink,
     gint width, gint height)
 {
   GstXWindow *xwindow = NULL;
@@ -1073,7 +1073,7 @@ gst_xvimagesink_xwindow_new (GstXvImageSink * xvimagesink,
 
 /* This function destroys a GstXWindow */
 static void
-gst_xvimagesink_xwindow_destroy (GstXvImageSink * xvimagesink,
+gst_xvimagesink_xwindow_destroy (MfwXvImageSink * xvimagesink,
     GstXWindow * xwindow)
 {
   g_return_if_fail (xwindow != NULL);
@@ -1097,7 +1097,7 @@ gst_xvimagesink_xwindow_destroy (GstXvImageSink * xvimagesink,
 }
 
 static void
-gst_xvimagesink_xwindow_update_geometry (GstXvImageSink * xvimagesink)
+gst_xvimagesink_xwindow_update_geometry (MfwXvImageSink * xvimagesink)
 {
   XWindowAttributes attr;
 
@@ -1126,7 +1126,7 @@ gst_xvimagesink_xwindow_update_geometry (GstXvImageSink * xvimagesink)
 }
 
 static void
-gst_xvimagesink_xwindow_clear (GstXvImageSink * xvimagesink,
+gst_xvimagesink_xwindow_clear (MfwXvImageSink * xvimagesink,
     GstXWindow * xwindow)
 {
   g_return_if_fail (xwindow != NULL);
@@ -1152,7 +1152,7 @@ gst_xvimagesink_xwindow_clear (GstXvImageSink * xvimagesink,
 /* This function commits our internal colorbalance settings to our grabbed Xv
    port. If the xcontext is not initialized yet it simply returns */
 static void
-gst_xvimagesink_update_colorbalance (GstXvImageSink * xvimagesink)
+gst_xvimagesink_update_colorbalance (MfwXvImageSink * xvimagesink)
 {
   GList *channels = NULL;
 
@@ -1223,7 +1223,7 @@ gst_xvimagesink_update_colorbalance (GstXvImageSink * xvimagesink)
    and navigation. It will also listen for configure events on the window to
    trigger caps renegotiation so on the fly software scaling can work. */
 static void
-gst_xvimagesink_handle_xevents (GstXvImageSink * xvimagesink)
+gst_xvimagesink_handle_xevents (MfwXvImageSink * xvimagesink)
 {
   XEvent e;
   guint pointer_x = 0, pointer_y = 0;
@@ -1420,7 +1420,7 @@ gst_lookup_xv_port_from_adaptor (GstXContext * xcontext,
    If this function does not return NULL because of an error, it also grabs
    the port via XvGrabPort */
 static GstCaps *
-gst_xvimagesink_get_xv_support (GstXvImageSink * xvimagesink,
+gst_xvimagesink_get_xv_support (MfwXvImageSink * xvimagesink,
     GstXContext * xcontext)
 {
   gint i;
@@ -1653,9 +1653,9 @@ gst_xvimagesink_get_xv_support (GstXvImageSink * xvimagesink,
     }
 
     if (format_caps) {
-      GstXvImageFormat *format = NULL;
+      MfwXvImageFormat *format = NULL;
 
-      format = g_new0 (GstXvImageFormat, 1);
+      format = g_new0 (MfwXvImageFormat, 1);
       if (format) {
         format->format = formats[i].id;
         format->caps = gst_caps_copy (format_caps);
@@ -1694,7 +1694,7 @@ gst_xvimagesink_get_xv_support (GstXvImageSink * xvimagesink,
 }
 
 static gpointer
-gst_xvimagesink_event_thread (GstXvImageSink * xvimagesink)
+gst_xvimagesink_event_thread (MfwXvImageSink * xvimagesink)
 {
   g_return_val_if_fail (GST_IS_XVIMAGESINK (xvimagesink), NULL);
 
@@ -1716,7 +1716,7 @@ gst_xvimagesink_event_thread (GstXvImageSink * xvimagesink)
 }
 
 static void
-gst_xvimagesink_manage_event_thread (GstXvImageSink * xvimagesink)
+gst_xvimagesink_manage_event_thread (MfwXvImageSink * xvimagesink)
 {
   GThread *thread = NULL;
 
@@ -1816,7 +1816,7 @@ gst_xvimagesink_calculate_pixel_aspect_ratio (GstXContext * xcontext)
    here that caps for supported format are generated without any window or
    image creation */
 static GstXContext *
-gst_xvimagesink_xcontext_get (GstXvImageSink * xvimagesink)
+gst_xvimagesink_xcontext_get (MfwXvImageSink * xvimagesink)
 {
   GstXContext *xcontext = NULL;
   XPixmapFormatValues *px_formats = NULL;
@@ -1988,7 +1988,7 @@ gst_xvimagesink_xcontext_get (GstXvImageSink * xvimagesink)
 /* This function cleans the X context. Closing the Display, releasing the XV
    port and unrefing the caps for supported formats. */
 static void
-gst_xvimagesink_xcontext_clear (GstXvImageSink * xvimagesink)
+gst_xvimagesink_xcontext_clear (MfwXvImageSink * xvimagesink)
 {
   GList *formats_list, *channels_list;
   GstXContext *xcontext;
@@ -2012,7 +2012,7 @@ gst_xvimagesink_xcontext_clear (GstXvImageSink * xvimagesink)
   formats_list = xcontext->formats_list;
 
   while (formats_list) {
-    GstXvImageFormat *format = formats_list->data;
+    MfwXvImageFormat *format = formats_list->data;
 
     gst_caps_unref (format->caps);
     g_free (format);
@@ -2060,12 +2060,12 @@ gst_xvimagesink_xcontext_clear (GstXvImageSink * xvimagesink)
 }
 
 static void
-gst_xvimagesink_imagepool_clear (GstXvImageSink * xvimagesink)
+gst_xvimagesink_imagepool_clear (MfwXvImageSink * xvimagesink)
 {
   g_mutex_lock (xvimagesink->pool_lock);
 
   while (xvimagesink->image_pool) {
-    GstXvImageBuffer *xvimage = xvimagesink->image_pool->data;
+    MfwXvImageBuffer *xvimage = xvimagesink->image_pool->data;
 
     xvimagesink->image_pool = g_slist_delete_link (xvimagesink->image_pool,
         xvimagesink->image_pool);
@@ -2080,7 +2080,7 @@ gst_xvimagesink_imagepool_clear (GstXvImageSink * xvimagesink)
 /* This function tries to get a format matching with a given caps in the
    supported list of formats we generated in gst_xvimagesink_get_xv_support */
 static gint
-gst_xvimagesink_get_format_from_caps (GstXvImageSink * xvimagesink,
+gst_xvimagesink_get_format_from_caps (MfwXvImageSink * xvimagesink,
     GstCaps * caps)
 {
   GList *list = NULL;
@@ -2090,7 +2090,7 @@ gst_xvimagesink_get_format_from_caps (GstXvImageSink * xvimagesink,
   list = xvimagesink->xcontext->formats_list;
 
   while (list) {
-    GstXvImageFormat *format = list->data;
+    MfwXvImageFormat *format = list->data;
 
     if (format) {
       if (gst_caps_can_intersect (caps, format->caps)) {
@@ -2106,7 +2106,7 @@ gst_xvimagesink_get_format_from_caps (GstXvImageSink * xvimagesink,
 static GstCaps *
 gst_xvimagesink_getcaps (GstBaseSink * bsink)
 {
-  GstXvImageSink *xvimagesink;
+  MfwXvImageSink *xvimagesink;
 
   xvimagesink = GST_XVIMAGESINK (bsink);
 
@@ -2121,7 +2121,7 @@ gst_xvimagesink_getcaps (GstBaseSink * bsink)
 static gboolean
 gst_xvimagesink_setcaps (GstBaseSink * bsink, GstCaps * caps)
 {
-  GstXvImageSink *xvimagesink;
+  MfwXvImageSink *xvimagesink;
   GstStructure *structure;
   guint32 im_format = 0;
   gboolean ret;
@@ -2317,7 +2317,7 @@ static GstStateChangeReturn
 gst_xvimagesink_change_state (GstElement * element, GstStateChange transition)
 {
   GstStateChangeReturn ret = GST_STATE_CHANGE_SUCCESS;
-  GstXvImageSink *xvimagesink;
+  MfwXvImageSink *xvimagesink;
   GstXContext *xcontext = NULL;
 
   xvimagesink = GST_XVIMAGESINK (element);
@@ -2389,7 +2389,7 @@ static void
 gst_xvimagesink_get_times (GstBaseSink * bsink, GstBuffer * buf,
     GstClockTime * start, GstClockTime * end)
 {
-  GstXvImageSink *xvimagesink;
+  MfwXvImageSink *xvimagesink;
 
   xvimagesink = GST_XVIMAGESINK (bsink);
 
@@ -2410,7 +2410,7 @@ gst_xvimagesink_get_times (GstBaseSink * bsink, GstBuffer * buf,
 static GstFlowReturn
 gst_xvimagesink_show_frame (GstVideoSink * vsink, GstBuffer * buf)
 {
-  GstXvImageSink *xvimagesink;
+  MfwXvImageSink *xvimagesink;
 
   xvimagesink = GST_XVIMAGESINK (vsink);
 
@@ -2480,7 +2480,7 @@ no_window:
 static gboolean
 gst_xvimagesink_event (GstBaseSink * sink, GstEvent * event)
 {
-  GstXvImageSink *xvimagesink = GST_XVIMAGESINK (sink);
+  MfwXvImageSink *xvimagesink = GST_XVIMAGESINK (sink);
 
   switch (GST_EVENT_TYPE (event)) {
     case GST_EVENT_TAG:{
@@ -2515,8 +2515,8 @@ gst_xvimagesink_buffer_alloc (GstBaseSink * bsink, guint64 offset, guint size,
     GstCaps * caps, GstBuffer ** buf)
 {
   GstFlowReturn ret = GST_FLOW_OK;
-  GstXvImageSink *xvimagesink;
-  GstXvImageBuffer *xvimage = NULL;
+  MfwXvImageSink *xvimagesink;
+  MfwXvImageBuffer *xvimage = NULL;
   GstCaps *intersection = NULL;
   GstStructure *structure = NULL;
   gint width, height, image_format;
@@ -2720,7 +2720,7 @@ static void
 gst_xvimagesink_navigation_send_event (GstNavigation * navigation,
     GstStructure * structure)
 {
-  GstXvImageSink *xvimagesink = GST_XVIMAGESINK (navigation);
+  MfwXvImageSink *xvimagesink = GST_XVIMAGESINK (navigation);
   GstPad *peer;
 
   if ((peer = gst_pad_get_peer (GST_VIDEO_SINK_PAD (xvimagesink)))) {
@@ -2788,7 +2788,7 @@ gst_xvimagesink_navigation_init (GstNavigationInterface * iface)
 static void
 gst_xvimagesink_set_xwindow_id (GstXOverlay * overlay, XID xwindow_id)
 {
-  GstXvImageSink *xvimagesink = GST_XVIMAGESINK (overlay);
+  MfwXvImageSink *xvimagesink = GST_XVIMAGESINK (overlay);
   GstXWindow *xwindow = NULL;
 
   g_return_if_fail (GST_IS_XVIMAGESINK (xvimagesink));
@@ -2876,7 +2876,7 @@ gst_xvimagesink_set_xwindow_id (GstXOverlay * overlay, XID xwindow_id)
 static void
 gst_xvimagesink_expose (GstXOverlay * overlay)
 {
-  GstXvImageSink *xvimagesink = GST_XVIMAGESINK (overlay);
+  MfwXvImageSink *xvimagesink = GST_XVIMAGESINK (overlay);
 
   gst_xvimagesink_xwindow_update_geometry (xvimagesink);
   gst_xvimagesink_xvimage_put (xvimagesink, NULL);
@@ -2886,7 +2886,7 @@ static void
 gst_xvimagesink_set_event_handling (GstXOverlay * overlay,
     gboolean handle_events)
 {
-  GstXvImageSink *xvimagesink = GST_XVIMAGESINK (overlay);
+  MfwXvImageSink *xvimagesink = GST_XVIMAGESINK (overlay);
 
   xvimagesink->handle_events = handle_events;
 
@@ -2922,7 +2922,7 @@ static void
 gst_xvimagesink_set_render_rectangle (GstXOverlay * overlay, gint x, gint y,
     gint width, gint height)
 {
-  GstXvImageSink *xvimagesink = GST_XVIMAGESINK (overlay);
+  MfwXvImageSink *xvimagesink = GST_XVIMAGESINK (overlay);
 
   /* FIXME: how about some locking? */
   if (x >= 0 && y >= 0 && width >= 0 && height >= 0) {
@@ -2952,7 +2952,7 @@ gst_xvimagesink_xoverlay_init (GstXOverlayClass * iface)
 static const GList *
 gst_xvimagesink_colorbalance_list_channels (GstColorBalance * balance)
 {
-  GstXvImageSink *xvimagesink = GST_XVIMAGESINK (balance);
+  MfwXvImageSink *xvimagesink = GST_XVIMAGESINK (balance);
 
   g_return_val_if_fail (GST_IS_XVIMAGESINK (xvimagesink), NULL);
 
@@ -2966,7 +2966,7 @@ static void
 gst_xvimagesink_colorbalance_set_value (GstColorBalance * balance,
     GstColorBalanceChannel * channel, gint value)
 {
-  GstXvImageSink *xvimagesink = GST_XVIMAGESINK (balance);
+  MfwXvImageSink *xvimagesink = GST_XVIMAGESINK (balance);
 
   g_return_if_fail (GST_IS_XVIMAGESINK (xvimagesink));
   g_return_if_fail (channel->label != NULL);
@@ -2997,7 +2997,7 @@ static gint
 gst_xvimagesink_colorbalance_get_value (GstColorBalance * balance,
     GstColorBalanceChannel * channel)
 {
-  GstXvImageSink *xvimagesink = GST_XVIMAGESINK (balance);
+  MfwXvImageSink *xvimagesink = GST_XVIMAGESINK (balance);
   gint value = 0;
 
   g_return_val_if_fail (GST_IS_XVIMAGESINK (xvimagesink), 0);
@@ -3056,7 +3056,7 @@ static void
 gst_xvimagesink_probe_probe_property (GstPropertyProbe * probe,
     guint prop_id, const GParamSpec * pspec)
 {
-  GstXvImageSink *xvimagesink = GST_XVIMAGESINK (probe);
+  MfwXvImageSink *xvimagesink = GST_XVIMAGESINK (probe);
 
   switch (prop_id) {
     case ARG_DEVICE:
@@ -3080,7 +3080,7 @@ static gboolean
 gst_xvimagesink_probe_needs_probe (GstPropertyProbe * probe,
     guint prop_id, const GParamSpec * pspec)
 {
-  GstXvImageSink *xvimagesink = GST_XVIMAGESINK (probe);
+  MfwXvImageSink *xvimagesink = GST_XVIMAGESINK (probe);
   gboolean ret = FALSE;
 
   switch (prop_id) {
@@ -3106,7 +3106,7 @@ static GValueArray *
 gst_xvimagesink_probe_get_values (GstPropertyProbe * probe,
     guint prop_id, const GParamSpec * pspec)
 {
-  GstXvImageSink *xvimagesink = GST_XVIMAGESINK (probe);
+  MfwXvImageSink *xvimagesink = GST_XVIMAGESINK (probe);
   GValueArray *array = NULL;
 
   if (G_UNLIKELY (!xvimagesink->xcontext)) {
@@ -3200,7 +3200,7 @@ static void
 gst_xvimagesink_set_property (GObject * object, guint prop_id,
     const GValue * value, GParamSpec * pspec)
 {
-  GstXvImageSink *xvimagesink;
+  MfwXvImageSink *xvimagesink;
 
   g_return_if_fail (GST_IS_XVIMAGESINK (object));
 
@@ -3287,7 +3287,7 @@ static void
 gst_xvimagesink_get_property (GObject * object, guint prop_id,
     GValue * value, GParamSpec * pspec)
 {
-  GstXvImageSink *xvimagesink;
+  MfwXvImageSink *xvimagesink;
 
   g_return_if_fail (GST_IS_XVIMAGESINK (object));
 
@@ -3360,7 +3360,7 @@ gst_xvimagesink_get_property (GObject * object, guint prop_id,
 }
 
 static void
-gst_xvimagesink_reset (GstXvImageSink * xvimagesink)
+gst_xvimagesink_reset (MfwXvImageSink * xvimagesink)
 {
   GThread *thread;
 
@@ -3411,7 +3411,7 @@ gst_xvimagesink_reset (GstXvImageSink * xvimagesink)
 static void
 gst_xvimagesink_finalize (GObject * object)
 {
-  GstXvImageSink *xvimagesink;
+  MfwXvImageSink *xvimagesink;
 
   xvimagesink = GST_XVIMAGESINK (object);
 
@@ -3445,7 +3445,7 @@ gst_xvimagesink_finalize (GObject * object)
 }
 
 static void
-gst_xvimagesink_init (GstXvImageSink * xvimagesink)
+gst_xvimagesink_init (MfwXvImageSink * xvimagesink)
 {
   xvimagesink->display_name = NULL;
   xvimagesink->adaptor_no = 0;
@@ -3500,7 +3500,7 @@ gst_xvimagesink_base_init (gpointer g_class)
 }
 
 static void
-gst_xvimagesink_class_init (GstXvImageSinkClass * klass)
+gst_xvimagesink_class_init (MfwXvImageSinkClass * klass)
 {
   GObjectClass *gobject_class;
   GstElementClass *gstelement_class;
@@ -3560,7 +3560,7 @@ gst_xvimagesink_class_init (GstXvImageSinkClass * klass)
           "The name of the video adaptor", NULL,
           G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
   /**
-   * GstXvImageSink:handle-expose
+   * MfwXvImageSink:handle-expose
    *
    * When enabled, the current frame will always be drawn in response to X
    * Expose.
@@ -3573,7 +3573,7 @@ gst_xvimagesink_class_init (GstXvImageSinkClass * klass)
           "the current frame will always be drawn in response to X Expose "
           "events", TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
   /**
-   * GstXvImageSink:double-buffer
+   * MfwXvImageSink:double-buffer
    *
    * Whether to double-buffer the output.
    *
@@ -3584,7 +3584,7 @@ gst_xvimagesink_class_init (GstXvImageSinkClass * klass)
           "Whether to double-buffer the output", TRUE,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
   /**
-   * GstXvImageSink:autopaint-colorkey
+   * MfwXvImageSink:autopaint-colorkey
    *
    * Whether to autofill overlay with colorkey
    *
@@ -3595,7 +3595,7 @@ gst_xvimagesink_class_init (GstXvImageSinkClass * klass)
           "Whether to autofill overlay with colorkey", TRUE,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
   /**
-   * GstXvImageSink:colorkey
+   * MfwXvImageSink:colorkey
    *
    * Color to use for the overlay mask.
    *
@@ -3607,9 +3607,9 @@ gst_xvimagesink_class_init (GstXvImageSinkClass * klass)
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
-   * GstXvImageSink:draw-borders
+   * MfwXvImageSink:draw-borders
    *
-   * Draw black borders when using GstXvImageSink:force-aspect-ratio to fill
+   * Draw black borders when using MfwXvImageSink:force-aspect-ratio to fill
    * unused parts of the video area.
    *
    * Since: 0.10.21
@@ -3653,13 +3653,13 @@ gst_xvimagesink_get_type (void)
 
   if (!xvimagesink_type) {
     static const GTypeInfo xvimagesink_info = {
-      sizeof (GstXvImageSinkClass),
+      sizeof (MfwXvImageSinkClass),
       gst_xvimagesink_base_init,
       NULL,
       (GClassInitFunc) gst_xvimagesink_class_init,
       NULL,
       NULL,
-      sizeof (GstXvImageSink),
+      sizeof (MfwXvImageSink),
       0,
       (GInstanceInitFunc) gst_xvimagesink_init,
     };
@@ -3689,7 +3689,7 @@ gst_xvimagesink_get_type (void)
       NULL,
     };
     xvimagesink_type = g_type_register_static (GST_TYPE_VIDEO_SINK,
-        "GstXvImageSink", &xvimagesink_info, 0);
+        "MfwXvImageSink", &xvimagesink_info, 0);
 
     g_type_add_interface_static (xvimagesink_type,
         GST_TYPE_IMPLEMENTS_INTERFACE, &iface_info);
