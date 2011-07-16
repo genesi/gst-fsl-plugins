@@ -2048,6 +2048,9 @@ mfw_gst_vpudec_check_allowed_caps (MfwGstVPU_Dec * vpu_dec)
     for (i = 0; i < gst_caps_get_size (allowed_caps); i++) {
         structure = gst_caps_get_structure (allowed_caps, i);
         gst_structure_get_fourcc(structure, "format", &format);
+        GST_INFO ("format: 0x%x i420: 0x%x", format, GST_STR_FOURCC ("I420"));
+        if (format == GST_STR_FOURCC ("I420"));
+            vpu_dec->fmt = 1;
         if (format == vpu_dec->fmt_fourcc)
             break;
     }
@@ -5035,7 +5038,7 @@ mfw_gst_vpudec_class_init (MfwGstVPU_DecClass * klass)
     g_object_class_install_property (gobject_class, MFW_GST_VPU_OUTPUT_FMT,
                                      g_param_spec_int ("fmt", "output_fmt",
                                                        "set the format of output(0 for NV12, 1 for I420",
-                                                       0, 1, 0,
+                                                       0, 1, 1,
                                                        G_PARAM_READWRITE));
 
 
@@ -5091,7 +5094,7 @@ mfw_gst_vpudec_init (MfwGstVPU_Dec * vpu_dec, MfwGstVPU_DecClass * gclass)
     vpu_dec->vpu_chipinit = FALSE;
 
     vpu_dec->lastframedropped = FALSE;
-    vpu_dec->frame_drop_allowed = TRUE;
+    vpu_dec->frame_drop_allowed = FALSE;
     vpu_dec->parser_input = TRUE;
     vpu_dec->predict_gop = FALSE;
     vpu_dec->min_latency = FALSE;
@@ -5102,7 +5105,7 @@ mfw_gst_vpudec_init (MfwGstVPU_Dec * vpu_dec, MfwGstVPU_DecClass * gclass)
 
     vpu_dec->pTS_Mgr = createTSManager(0);
 
-    vpu_dec->fmt = 0;
+    vpu_dec->fmt = 1;
 
 #ifdef VPU_PARALLELIZATION
     vpu_dec->allow_parallelization = TRUE;

@@ -161,11 +161,12 @@ static GstStaticPadTemplate gst_xvimagesink_sink_template_factory =
     GST_STATIC_PAD_TEMPLATE ("sink",
     GST_PAD_SINK,
     GST_PAD_ALWAYS,
-    GST_STATIC_CAPS ("video/x-raw-rgb, "
+    GST_STATIC_CAPS (/*"video/x-raw-rgb, "
         "framerate = (fraction) [ 0, MAX ], "
         "width = (int) [ 1, MAX ], "
-        "height = (int) [ 1, MAX ]; "
+        "height = (int) [ 1, MAX ]; "*/
         "video/x-raw-yuv, "
+        "format = (fourcc)I420,"
         "framerate = (fraction) [ 0, MAX ], "
         "width = (int) [ 1, MAX ], " "height = (int) [ 1, MAX ]")
     );
@@ -745,15 +746,15 @@ beach_unlocked:
     return GST_FLOW_ERROR;
   }
   xvimage->buffer = *gst_buffer_new();
-  GST_BUFFER_SIZE(&xvimage->buffer) = xvimage->size;
-  GST_BUFFER_DATA(&xvimage->buffer)= vaddr;
+  GST_BUFFER_SIZE(xvimage) = xvimage->size;
+  GST_BUFFER_DATA(xvimage)= vaddr;
   bufmeta = gst_buffer_meta_new();
   index = G_N_ELEMENTS(xvimage->buffer._gst_reserved)-1;
   bufmeta->physical_data = (gpointer) paddr;
   xvimage->buffer._gst_reserved[index] = bufmeta;
   bufmeta->priv = handle;
-  GST_BUFFER_MALLOCDATA(&xvimage->buffer) = bufmeta;
-  GST_BUFFER_FREE_FUNC(&xvimage->buffer) = free_hwbuffer;
+  GST_BUFFER_MALLOCDATA(xvimage) = bufmeta;
+  GST_BUFFER_FREE_FUNC(xvimage) = free_hwbuffer;
   //xvimage->buffer = *gst_buffer_meta_new ();
   //xvimage->buffer = GST_BUFFER_CAST(&xvimage);
     
@@ -1595,6 +1596,7 @@ gst_xvimagesink_get_xv_support (MfwXvImageSink * xvimagesink,
   formats = XvListImageFormats (xcontext->disp,
       xcontext->xv_port_id, &nb_formats);
   caps = gst_caps_new_empty ();
+#if 0
   for (i = 0; i < nb_formats; i++) {
     GstCaps *format_caps = NULL;
     gboolean is_rgb_format = FALSE;
@@ -1670,6 +1672,30 @@ gst_xvimagesink_get_xv_support (MfwXvImageSink * xvimagesink,
       } else
         gst_caps_append (caps, format_caps);
     }
+  }
+#endif
+  xcontext->im_format = 0x30323449;
+
+  GST_DEBUG ("format : 0x%x format.id: 0x%x", xcontext->im_format, formats[1].id);
+
+  GstCaps *format_caps = NULL;
+  format_caps = gst_caps_new_simple ("video/x-raw-yuv",
+                                     "format", GST_TYPE_FOURCC, 0x30323449,
+                                     "width", GST_TYPE_INT_RANGE, 1, max_w,
+                                     "height", GST_TYPE_INT_RANGE, 1, max_h,
+                                     "framerate", GST_TYPE_FRACTION_RANGE, 0, 1, G_MAXINT, 1, NULL);
+
+  if (format_caps) {
+      MfwXvImageFormat *format = NULL;
+
+      format = g_new0 (MfwXvImageFormat, 1);
+      if (format) {
+          format->format = 0x30323449;
+          format->caps = gst_caps_copy (format_caps);
+          xcontext->formats_list = g_list_append (xcontext->formats_list, format);
+      }
+
+      gst_caps_append (caps, format_caps);
   }
 
   /* Collected all caps into either the caps or rgb_caps structures.
