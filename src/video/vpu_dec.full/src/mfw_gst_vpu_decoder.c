@@ -5094,7 +5094,7 @@ mfw_gst_vpudec_init (MfwGstVPU_Dec * vpu_dec, MfwGstVPU_DecClass * gclass)
     vpu_dec->vpu_chipinit = FALSE;
 
     vpu_dec->lastframedropped = FALSE;
-    vpu_dec->frame_drop_allowed = FALSE;
+    vpu_dec->frame_drop_allowed = TRUE;
     vpu_dec->parser_input = TRUE;
     vpu_dec->predict_gop = FALSE;
     vpu_dec->min_latency = FALSE;
