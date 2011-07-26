@@ -4,7 +4,7 @@ Priority: extra
 Maintainer: Sario Hu <b01138@freescale.com>
 Uploaders: Ying-Chun Liu (PaulLiu) <paul.liu@linaro.org>
 Build-Depends: debhelper (>= 7), cdbs, autotools-dev, libxv-dev, libipu-dev,
-               dh-autoreconf, libgstreamer0.10-dev, gstreamer-tools,
+               dh-autoreconf, libgstreamer0.10-dev, gstreamer-tools, libvpu-dev,
                autoconf, automake, libtool, libx11-dev, libxext-dev,
                libgstreamer-plugins-base0.10-dev, x11proto-video-dev
 Standards-Version: 3.9.1
