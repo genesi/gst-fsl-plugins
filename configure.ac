@@ -282,19 +282,6 @@ dnl make GST_PLUGINS_BASE_CFLAGS and GST_PLUGINS_BASE_LIBS available
 AC_SUBST(GST_PLUGINS_BASE_CFLAGS)
 AC_SUBST(GST_PLUGINS_BASE_LIBS)
 
-
-FSL_MM_CORE_REQUIRED=1.5.1
-PKG_CHECK_MODULES(FSL_MM_CORE, \
-  multimedia-core-imx >= $FSL_MM_CORE_REQUIRED,
-  HAVE_MM_CORE=yes,HAVE_MM_CORE=no)
-
-if test "x$HAVE_MM_CORE" = "xno"; then
-  AC_MSG_ERROR([no fsl-mm-core header/libs found !])
-fi
-dnl make FSL_MM_CORE_CFLAGS and FSL_MM_CORE_LIBS available
-AC_SUBST(FSL_MM_CORE_CFLAGS)
-AC_SUBST(FSL_MM_CORE_LIBS)
-
 FSL_VPU_CORE_REQUIRED=4.4.0
 PKG_CHECK_MODULES(VPU, \
   vpu-core-imx >= $FSL_VPU_CORE_REQUIRED,
@@ -514,7 +501,6 @@ src/audio/wma10_dec/src/Makefile
 src/audio/wma8_enc/src/Makefile
 src/audio/spdif_rx/src/Makefile
 src/audio/spdif_tx/src/Makefile
-src/audio/audio_pp/src/Makefile
 src/audio/audio_src/src/Makefile   
 src/audio/down_mix/src/Makefile 
 src/audio/amr_dec/src/Makefile 
@@ -528,8 +514,6 @@ src/video/wmv_dec/src/Makefile
 src/video/vpu_dec.full/src/Makefile
 src/video/vpu_enc/src/Makefile
 src/video/ipu_csc/src/Makefile
-src/video/deinterlace/src/Makefile
-src/parser/aiur/src/Makefile
 src/misc/v4l_source/src/Makefile
 src/misc/v4l_sink/src/Makefile
 src/misc/xvimage/Makefile

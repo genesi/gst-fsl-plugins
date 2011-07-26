@@ -613,11 +613,8 @@ endif
 
 if PLATFORM_IS_MX51
 
-BASEDIRS = src/audio/audio_pp/src      \
-           src/audio/amr_dec/src      \
+BASEDIRS =	src/audio/amr_dec/src      \
 		src/video/vpu_dec.full/src       \
-		src/video/deinterlace/src   \
-		src/parser/aiur/src         \
 		src/misc/v4l_source/src     \
 		src/misc/v4l_sink/src     \
 		src/misc/xvimage
@@ -864,10 +861,7 @@ endif
 
 if PLATFORM_IS_MX5X
 
-BASEDIRS = src/audio/audio_pp/src      \
-		src/video/vpu_dec.full/src       \
-		src/video/deinterlace/src   \
-		src/parser/aiur/src         \
+BASEDIRS =	src/video/vpu_dec.full/src       \
 		src/misc/v4l_source/src     \
 		src/misc/v4l_sink/src      \
 		src/misc/xvimage
