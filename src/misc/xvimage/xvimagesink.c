@@ -547,6 +547,18 @@ gst_xvimagesink_xvimage_new (MfwXvImageSink * xvimagesink, GstCaps * caps)
     GST_WARNING ("failed getting geometry from caps %" GST_PTR_FORMAT, caps);
   }
 
+  int crop_top = 0, crop_bot = 0, crop_right = 0, crop_left = 0;
+
+  if (gst_structure_get_int (structure, "crop-top-by-pixel", &crop_top))
+    xvimage->height += crop_top;
+  if (gst_structure_get_int (structure, "crop-bottom-by-pixel", &crop_bot))
+    xvimage->height += crop_bot;
+
+  if (gst_structure_get_int (structure, "crop-right-by-pixel", &crop_right))
+    xvimage->width += crop_right;
+  if (gst_structure_get_int (structure, "crop-left-by-pixel", &crop_left))
+    xvimage->width += crop_left;
+
   GST_LOG_OBJECT (xvimagesink, "creating %dx%d", xvimage->width,
       xvimage->height);
 
@@ -757,7 +769,6 @@ beach_unlocked:
   GST_BUFFER_FREE_FUNC(xvimage) = free_hwbuffer;
   //xvimage->buffer = *gst_buffer_meta_new ();
   //xvimage->buffer = GST_BUFFER_CAST(&xvimage);
-    
   return xvimage;
 }
 
@@ -2476,10 +2487,10 @@ gst_xvimagesink_show_frame (GstVideoSink * vsink, GstBuffer * buf)
 
     intptr_t x[2] = { 0xbeefc0de, /*xvimagesink->xvimage->buffer.phy_addr*/ DMABLE_BUFFER_PHY_ADDR(buf) };
     GST_INFO_OBJECT(xvimagesink, "mfwbuffer: %p", DMABLE_BUFFER_PHY_ADDR(buf));
-    memcpy (xvimagesink->xvimage->xvimage->data,
-        GST_BUFFER_DATA (buf),
-        MIN (GST_BUFFER_SIZE (buf), xvimagesink->xvimage->size));
-    //memcpy (xvimagesink->xvimage->xvimage->data, x, sizeof(x));
+    //memcpy (xvimagesink->xvimage->xvimage->data,
+    //    GST_BUFFER_DATA (buf),
+    //    MIN (GST_BUFFER_SIZE (buf), xvimagesink->xvimage->size));
+    memcpy (xvimagesink->xvimage->xvimage->data, x, sizeof(x));
       //xvimagesink->xvimage->xvimage->data = GST_BUFFER_DATA (buf);//xvimagesink->xvimage->buffer.virt_addr;
       
     if (!gst_xvimagesink_xvimage_put (xvimagesink, xvimagesink->xvimage))
