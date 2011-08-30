@@ -39,11 +39,3 @@ Description: Freescale Multimedia Gstreamer Plugin libraries.
  This is the library for development Freescale Multimedia Gstreamer Plugin.
  .
  This package contains the development headers.
-
-Package: libgst-fsl-plugins-tools
-Section: utils
-Architecture: armel
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Freescale Multimedia Gstreamer Utils.
- This is the library for development Freescale Multimedia Gstreamer Plugin.
- This package contains the development utils.

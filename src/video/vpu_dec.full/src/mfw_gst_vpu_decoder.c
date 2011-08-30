@@ -49,9 +49,6 @@
 #include "mfw_gst_vpu_decoder.h"
 #include "mfw_gst_vpu_thread.h"
 
-#include "../../../misc/i_sink/src/mfw_isink_frame.h"
-
-
 
 /*======================================================================================
                                         LOCAL MACROS
