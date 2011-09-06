@@ -153,6 +153,7 @@ enum
     PROP_ALPHA_VALUE,
 #endif
     PROP_RENDERED_FRAMES,
+    PROP_COLOR_KEY_VALUE,
 };
 
 
@@ -255,15 +256,10 @@ mfw_gst_v4lsink_create_event_thread (MFW_GST_V4LSINK_INFO_T * v4l_info)
                 v4l_info->gstXInfo->running = TRUE;
                 v4l_info->gstXInfo->event_thread = g_thread_create ((GThreadFunc) mfw_gst_xv4l2_event_thread, v4l_info, TRUE, NULL);
             }
+        }
 
-            if(!(IS_PXP(v4l_info->chipcode)))
+        if(!(IS_PXP(v4l_info->chipcode)))
                 mfw_gst_set_gbl_alpha (v4l_info->fd_fb, 255);
-
-        }
-        else {
-            if(!(IS_PXP(v4l_info->chipcode)))
-                mfw_gst_set_gbl_alpha (v4l_info->fd_fb, 128);
-        }
 }
 
 
@@ -660,6 +656,19 @@ mfw_gst_v4lsink_close (MFW_GST_V4LSINK_INFO_T * v4l_info)
     return;
 }
 
+void mfw_gst_v4lsink_set_color_key_value(MFW_GST_V4LSINK_INFO_T *v4l, gint newval)
+{
+	struct mxcfb_color_key colorKey;
+	colorKey.color_key = newval;
+	colorKey.enable = 1;
+	if (ioctl(v4l->fd_fb, MXCFB_SET_CLR_KEY, &colorKey) < 0) {
+		GST_ERROR("set color key failed.\n");
+	} else {
+		GST_DEBUG("%s successfully set color key value %u/0x%04x\n", __func__, newval, newval);
+	}
+}
+
+
 /*=============================================================================
 FUNCTION:           mfw_gst_v4lsink_set_property
 
@@ -772,6 +781,11 @@ mfw_gst_v4lsink_set_property (GObject * object, guint prop_id,
         mfw_gst_v4lsink_set_alpha_enable (v4l_info, g_value_get_int (value));
         break;
 #endif
+
+    case PROP_COLOR_KEY_VALUE:
+	GST_DEBUG("COLOR_KEY_VALUE:%d\n", g_value_get_int(value));
+	mfw_gst_v4lsink_set_color_key_value(v4l_info, g_value_get_int(value));
+    break;
 
     default:
         GST_DEBUG ("unkwown id:%d\n", prop_id);
@@ -1762,6 +1776,15 @@ mfw_gst_v4lsink_class_init (MFW_GST_V4LSINK_INFO_CLASS_T * klass)
                                                        "Get the total rendered frames",
                                                        0, G_MAXINT, 0,
                                                        G_PARAM_READABLE));
+
+    g_object_class_install_property (gobject_class, PROP_COLOR_KEY_VALUE,
+                                     g_param_spec_int ("color-key",
+                                                       "color key value",
+                                                       "set/get color key value (0-16777215)",
+                                                       -1, (1<<24)-1, (1<<24)-1,
+                                                       G_PARAM_READWRITE));
+
+
 
 #if defined (VL4_STREAM_CALLBACK)
     mfw_gst_v4lsink_signals[SIGNAL_V4L_STREAM_CALLBACK] =
