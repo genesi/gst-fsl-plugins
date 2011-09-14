@@ -4424,9 +4424,11 @@ mfw_gst_vpudec_setcaps (GstPad * pad, GstCaps * caps)
         vpu_dec->codec = STD_VC1;
     else if (strcmp (mime, "video/mp2v") == 0)
         vpu_dec->codec = STD_MPEG2;
+#if defined(BUILD_WITH_REALVIDEO)
     else if ((strcmp (mime, "video/x-pn-realvideo") == 0) && 
               HAS_RV_DECODER(vpu_dec->chip_code))
         vpu_dec->codec = STD_RV;
+#endif
     else if (((strcmp (mime, "video/x-divx") == 0) ||
               (strcmp (mime, "video/x-xvid") == 0)) && 
              HAS_DIVX_DECODER(vpu_dec->chip_code)) {
@@ -4797,7 +4799,7 @@ mfw_gst_vpudec_codec_get_type (void)
 {
     CHIP_CODE chip_code = getChipCode();
     const gchar *name = "MfwGstVpuDecCodecs";
-    
+
     if ((CC_MX51 == chip_code) || (CC_MX53 == chip_code)) {
         static GEnumValue vpudec_codecs[] = {
             {STD_MPEG4, STR (STD_MPEG4),    "std_mpeg4"},
@@ -4806,11 +4808,13 @@ mfw_gst_vpudec_codec_get_type (void)
             {STD_VC1,   STR (STD_VC1),      "std_vc1"},
             {STD_MPEG2, STR (STD_MPEG2),    "std_mpeg2"},
             {STD_DIV3,  STR (STD_DIV3),     "std_div3"},
+#if defined(BUILD_WITH_REALVIDEO)
             {STD_RV,    STR (STD_RV),       "std_rv"},
+#endif
             {STD_MJPG,  STR (STD_MJPG),     "std_mjpg"},
             {0, NULL, NULL}
         };
-        
+
         return (g_enum_register_static (name, vpudec_codecs));
     }
     else if (CC_MX37 == chip_code) {
