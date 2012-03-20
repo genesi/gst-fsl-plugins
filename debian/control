@@ -12,7 +12,7 @@ Homepage: http://www.freescale.com
 
 Package: gstreamer0.10-fsl-mm-plugins
 Section: video
-Architecture: armel
+Architecture: armel armhf
 Depends: ${shlibs:Depends}, ${misc:Depends}
 XB-GStreamer-Version: ${gstreamer:Version}
 XB-GStreamer-Elements: ${gstreamer:Elements}
@@ -26,14 +26,14 @@ Description: Freescale Multimedia Gstreamer Plugin for GStreamer.
 
 Package: libgst-fsl-plugins0
 Section: libs
-Architecture: armel
+Architecture: armel armhf
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: Freescale Multimedia Gstreamer Plugin libraries.
  This is the library for development Freescale Multimedia Gstreamer Plugin.
 
 Package: libgst-fsl-plugins-dev
 Section: libdevel
-Architecture: armel
+Architecture: armel armhf
 Depends: libgst-fsl-plugins0 (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
 Description: Freescale Multimedia Gstreamer Plugin libraries.
  This is the library for development Freescale Multimedia Gstreamer Plugin.
