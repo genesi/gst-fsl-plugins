@@ -22,6 +22,8 @@
 
 #include <gst/video/gstvideosink.h>
 
+#define HAVE_XSHM 1
+
 #ifdef HAVE_XSHM
 #include <sys/types.h>
 #include <sys/ipc.h>

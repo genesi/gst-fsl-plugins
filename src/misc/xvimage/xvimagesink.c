@@ -161,12 +161,11 @@ static GstStaticPadTemplate gst_xvimagesink_sink_template_factory =
     GST_STATIC_PAD_TEMPLATE ("sink",
     GST_PAD_SINK,
     GST_PAD_ALWAYS,
-    GST_STATIC_CAPS (/*"video/x-raw-rgb, "
+    GST_STATIC_CAPS ("video/x-raw-rgb, "
         "framerate = (fraction) [ 0, MAX ], "
         "width = (int) [ 1, MAX ], "
-        "height = (int) [ 1, MAX ]; "*/
+        "height = (int) [ 1, MAX ]; "
         "video/x-raw-yuv, "
-        "format = (fourcc)I420,"
         "framerate = (fraction) [ 0, MAX ], "
         "width = (int) [ 1, MAX ], " "height = (int) [ 1, MAX ]")
     );
@@ -578,7 +577,7 @@ gst_xvimagesink_xvimage_new (MfwXvImageSink * xvimagesink, GstCaps * caps)
   /* Setting an error handler to catch failure */
   error_caught = FALSE;
   handler = XSetErrorHandler (gst_xvimagesink_handle_xerror);
-
+#if 1
 #ifdef HAVE_XSHM
   if (xvimagesink->xcontext->use_xshm) {
     int expected_size;
@@ -658,7 +657,6 @@ gst_xvimagesink_xvimage_new (MfwXvImageSink * xvimagesink, GstCaps * caps)
             xvimage->xvimage->offsets[plane]);
       }
     }
-
     xvimage->SHMInfo.shmid = shmget (IPC_PRIVATE, xvimage->size,
         IPC_CREAT | 0777);
     if (xvimage->SHMInfo.shmid == -1) {
@@ -742,13 +740,7 @@ gst_xvimagesink_xvimage_new (MfwXvImageSink * xvimagesink, GstCaps * caps)
   GST_BUFFER_DATA (xvimage) = (guchar *) xvimage->xvimage->data;
   GST_BUFFER_SIZE (xvimage) = xvimage->size;
 
-  g_mutex_unlock (xvimagesink->x_lock);
-
-beach_unlocked:
-  if (!succeeded) {
-    gst_xvimage_buffer_free (xvimage);
-    xvimage = NULL;
-  }
+#if 1
   gint index;
   GstBufferMeta *bufmeta;
   unsigned int *vaddr, *paddr;    
@@ -758,17 +750,29 @@ beach_unlocked:
     return GST_FLOW_ERROR;
   }
   xvimage->buffer = *gst_buffer_new();
-  GST_BUFFER_SIZE(xvimage) = xvimage->size;
-  GST_BUFFER_DATA(xvimage)= vaddr;
+  GST_BUFFER_SIZE(&xvimage->buffer) = xvimage->size;
+  GST_BUFFER_DATA(&xvimage->buffer)= vaddr;
   bufmeta = gst_buffer_meta_new();
   index = G_N_ELEMENTS(xvimage->buffer._gst_reserved)-1;
   bufmeta->physical_data = (gpointer) paddr;
   xvimage->buffer._gst_reserved[index] = bufmeta;
   bufmeta->priv = handle;
-  GST_BUFFER_MALLOCDATA(xvimage) = bufmeta;
-  GST_BUFFER_FREE_FUNC(xvimage) = free_hwbuffer;
+  GST_BUFFER_MALLOCDATA(&xvimage->buffer) = bufmeta;
+  GST_BUFFER_FREE_FUNC(&xvimage->buffer) = free_hwbuffer;
+  succeeded = TRUE;
   //xvimage->buffer = *gst_buffer_meta_new ();
   //xvimage->buffer = GST_BUFFER_CAST(&xvimage);
+#endif
+
+  g_mutex_unlock (xvimagesink->x_lock);
+
+beach_unlocked:
+  if (!succeeded) {
+    gst_xvimage_buffer_free (xvimage);
+    xvimage = NULL;
+  }
+#endif
+
   return xvimage;
 }
 
@@ -1026,8 +1030,8 @@ gst_xvimagesink_xwindow_new (MfwXvImageSink * xvimagesink,
   XGetWindowAttributes(xvimagesink->xcontext->disp, xvimagesink->xcontext->root, &rootattr);
 
   xvimagesink->render_rect.x = xvimagesink->render_rect.y = 0;
-  xvimagesink->render_rect.w = rootattr.width;
-  xvimagesink->render_rect.h = rootattr.height;
+  xvimagesink->render_rect.w = width; //rootattr.width;
+  xvimagesink->render_rect.h = height; //rootattr.height;
 
   xwindow->width = rootattr.width;
   xwindow->height = rootattr.height;
@@ -1039,9 +1043,10 @@ gst_xvimagesink_xwindow_new (MfwXvImageSink * xvimagesink,
     
   xwindow->win = XCreateSimpleWindow (xvimagesink->xcontext->disp,
       xvimagesink->xcontext->root,
-      0, 0, rootattr.width, rootattr.height, 0, 0, xvimagesink->xcontext->black);
+      0, 0, width, height, /*rootattr.width, rootattr.height,*/
+      0, 0, xvimagesink->xcontext->black);
 
-  XChangeWindowAttributes(xvimagesink->xcontext->disp, xwindow->win, CWOverrideRedirect , &xsetattr);
+  //XChangeWindowAttributes(xvimagesink->xcontext->disp, xwindow->win, CWOverrideRedirect , &xsetattr);
     
   /* We have to do that to prevent X from redrawing the background on
    * ConfigureNotify. This takes away flickering of video when resizing. */
@@ -1607,7 +1612,6 @@ gst_xvimagesink_get_xv_support (MfwXvImageSink * xvimagesink,
   formats = XvListImageFormats (xcontext->disp,
       xcontext->xv_port_id, &nb_formats);
   caps = gst_caps_new_empty ();
-#if 0
   for (i = 0; i < nb_formats; i++) {
     GstCaps *format_caps = NULL;
     gboolean is_rgb_format = FALSE;
@@ -1683,30 +1687,6 @@ gst_xvimagesink_get_xv_support (MfwXvImageSink * xvimagesink,
       } else
         gst_caps_append (caps, format_caps);
     }
-  }
-#endif
-  xcontext->im_format = 0x30323449;
-
-  GST_DEBUG ("format : 0x%x format.id: 0x%x", xcontext->im_format, formats[1].id);
-
-  GstCaps *format_caps = NULL;
-  format_caps = gst_caps_new_simple ("video/x-raw-yuv",
-                                     "format", GST_TYPE_FOURCC, 0x30323449,
-                                     "width", GST_TYPE_INT_RANGE, 1, max_w,
-                                     "height", GST_TYPE_INT_RANGE, 1, max_h,
-                                     "framerate", GST_TYPE_FRACTION_RANGE, 0, 1, G_MAXINT, 1, NULL);
-
-  if (format_caps) {
-      MfwXvImageFormat *format = NULL;
-
-      format = g_new0 (MfwXvImageFormat, 1);
-      if (format) {
-          format->format = 0x30323449;
-          format->caps = gst_caps_copy (format_caps);
-          xcontext->formats_list = g_list_append (xcontext->formats_list, format);
-      }
-
-      gst_caps_append (caps, format_caps);
   }
 
   /* Collected all caps into either the caps or rgb_caps structures.
@@ -2477,7 +2457,7 @@ gst_xvimagesink_show_frame (GstVideoSink * vsink, GstBuffer * buf)
         GST_ELEMENT_ERROR (xvimagesink, RESOURCE, WRITE,
             ("Failed to create output image buffer of %dx%d pixels",
                 xvimagesink->xvimage->width, xvimagesink->xvimage->height),
-            ("XServer allocated buffer size did not match input buffer"));
+            ("XServer allocated buffer size did not match input buffer (%u != %u)", xvimagesink->xvimage->size < GST_BUFFER_SIZE (buf)));
 
         gst_xvimage_buffer_destroy (xvimagesink->xvimage);
         xvimagesink->xvimage = NULL;
@@ -2485,14 +2465,16 @@ gst_xvimagesink_show_frame (GstVideoSink * vsink, GstBuffer * buf)
       }
     }
 
-    intptr_t x[2] = { 0xbeefc0de, /*xvimagesink->xvimage->buffer.phy_addr*/ DMABLE_BUFFER_PHY_ADDR(buf) };
-    GST_INFO_OBJECT(xvimagesink, "mfwbuffer: %p", DMABLE_BUFFER_PHY_ADDR(buf));
-    //memcpy (xvimagesink->xvimage->xvimage->data,
-    //    GST_BUFFER_DATA (buf),
-    //    MIN (GST_BUFFER_SIZE (buf), xvimagesink->xvimage->size));
-    memcpy (xvimagesink->xvimage->xvimage->data, x, sizeof(x));
-      //xvimagesink->xvimage->xvimage->data = GST_BUFFER_DATA (buf);//xvimagesink->xvimage->buffer.virt_addr;
-      
+    if (IS_DMABLE_BUFFER(buf)){
+	intptr_t x[2] = { 0xbeefc0de, /*xvimagesink->xvimage->buffer.phy_addr*/ DMABLE_BUFFER_PHY_ADDR(buf) };
+	memcpy (xvimagesink->xvimage->xvimage->data, x, sizeof(x));
+	GST_INFO_OBJECT(xvimagesink, "mfwbuffer: %p", DMABLE_BUFFER_PHY_ADDR(buf));
+    } else {
+	memcpy (xvimagesink->xvimage->xvimage->data, GST_BUFFER_DATA (buf),
+		MIN (GST_BUFFER_SIZE (buf), xvimagesink->xvimage->size));
+	//xvimagesink->xvimage->xvimage->data = GST_BUFFER_DATA (buf);//xvimagesink->xvimage->buffer.virt_addr;
+    }
+
     if (!gst_xvimagesink_xvimage_put (xvimagesink, xvimagesink->xvimage))
       goto no_window;
   }
@@ -3753,7 +3735,7 @@ static gboolean
 plugin_init (GstPlugin * plugin)
 {
   if (!gst_element_register (plugin, "mfw_xvimagesink",
-          GST_RANK_PRIMARY, GST_TYPE_XVIMAGESINK))
+          FSL_GST_RANK_HIGH + 2, GST_TYPE_XVIMAGESINK))
     return FALSE;
 
   GST_DEBUG_CATEGORY_INIT (gst_debug_xvimagesink, "mfw_xvimagesink", 0,
