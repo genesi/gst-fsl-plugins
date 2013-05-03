@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright (c) 2010-2012, Freescale Semiconductor, Inc. All rights reserved.
  *
  */
 
@@ -44,14 +44,17 @@
  * Constant to define an undefined clock time.
  */
 
-typedef  long long TSM_TIMESTAMP;
+typedef long long TSM_TIMESTAMP;
 
-typedef enum {
-    MODE_AI,
-    MODE_FIFO,
-}TSMGR_MODE;
+typedef enum
+{
+  MODE_AI,
+  MODE_FIFO,
+} TSMGR_MODE;
 
 #define TSM_TIMESTAMP_NONE ((long long)(-1))
+#define TSM_KEY_NONE ((void *)0)
+
 /**
  * GST_CLOCK_TIME_IS_VALID:
  * @time: clock time to validate
@@ -79,7 +82,13 @@ extern "C"
  *
  * @return	
  */
-EXTERN void TSManagerReceive(void * handle, TSM_TIMESTAMP timestamp);
+  EXTERN void TSManagerReceive (void *handle, TSM_TIMESTAMP timestamp);
+
+  EXTERN void TSManagerReceive2 (void * handle, TSM_TIMESTAMP timestamp, int size);
+
+  EXTERN void TSManagerFlush2 (void * handle, int size);
+
+  EXTERN void TSManagerValid2 (void * handle, int size, void * key);
 
 /*!
  * This function send the timestamp for next output frame.
@@ -88,7 +97,13 @@ EXTERN void TSManagerReceive(void * handle, TSM_TIMESTAMP timestamp);
  *
  * @return	timestamp for next output frame.
  */
-EXTERN TSM_TIMESTAMP TSManagerSend (void * handle);
+  EXTERN TSM_TIMESTAMP TSManagerSend (void *handle);
+
+  EXTERN TSM_TIMESTAMP TSManagerSend2 (void *handle, void * key);
+
+  EXTERN TSM_TIMESTAMP TSManagerQuery2 (void *handle, void * key);
+
+  EXTERN TSM_TIMESTAMP TSManagerQuery (void *handle);
 /*!
  * This function resync timestamp handler when reset and seek
  *
@@ -100,7 +115,8 @@ EXTERN TSM_TIMESTAMP TSManagerSend (void * handle);
  *
  * @return	
  */
-EXTERN void resyncTSManager(void * handle, TSM_TIMESTAMP synctime, TSMGR_MODE mode);
+  EXTERN void resyncTSManager (void *handle, TSM_TIMESTAMP synctime,
+      TSMGR_MODE mode);
 /*!
  * This function create and reset timestamp handler
  *
@@ -108,7 +124,7 @@ EXTERN void resyncTSManager(void * handle, TSM_TIMESTAMP synctime, TSMGR_MODE mo
  * 
  * @return	
  */
-EXTERN void * createTSManager(int ts_buf_size);
+  EXTERN void *createTSManager (int ts_buf_size);
 /*!
  * This function destory timestamp handler
  *
@@ -116,7 +132,7 @@ EXTERN void * createTSManager(int ts_buf_size);
  * 
  * @return	
  */
-EXTERN void destroyTSManager(void * handle);
+  EXTERN void destroyTSManager (void *handle);
 /*!
  * This function set  history buffer frame interval by fps_n and fps_d 
  *
@@ -126,7 +142,7 @@ EXTERN void destroyTSManager(void * handle);
  * 
  * @return	
  */
-EXTERN void setTSManagerFrameRate(void * handle, int fps_n, int fps_d);
+  EXTERN void setTSManagerFrameRate (void *handle, int fps_n, int fps_d);
 //EXTERN void setTSManagerFrameRate(void * handle, float framerate);
 /*!
  * This function set the current calculated Frame Interval
@@ -135,7 +151,7 @@ EXTERN void setTSManagerFrameRate(void * handle, int fps_n, int fps_d);
  * 
  * @return	
  */
-EXTERN TSM_TIMESTAMP getTSManagerFrameInterval(void * handle);
+  EXTERN TSM_TIMESTAMP getTSManagerFrameInterval (void *handle);
 /*!
  * This function get  the current time stamp postion
  *
@@ -143,7 +159,7 @@ EXTERN TSM_TIMESTAMP getTSManagerFrameInterval(void * handle);
  * 
  * @return	
  */
-EXTERN TSM_TIMESTAMP getTSManagerPosition(void * handle);
+  EXTERN TSM_TIMESTAMP getTSManagerPosition (void *handle);
 
 #ifdef __cplusplus
 }

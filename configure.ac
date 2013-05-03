@@ -345,11 +345,12 @@ AC_OUTPUT(
 Makefile
 libs/hbuf_alloc/Makefile
 libs/vss/Makefile
-libs/sconf/Makefile
 libs/me/Makefile
+libs/sconf/Makefile
 libs/gstbufmeta/Makefile
 src/video/vpu_dec.full/src/Makefile
-src/misc/v4l_sink/src/Makefile
+src/video/vpu_enc/src/Makefile
+src/misc/v4l_source/src/Makefile
 src/misc/xvimage/Makefile
 )
 

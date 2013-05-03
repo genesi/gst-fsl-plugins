@@ -22,7 +22,7 @@
 
 #include <gst/video/gstvideosink.h>
 
-#define HAVE_XSHM 1
+//#define HAVE_XSHM 1
 
 #ifdef HAVE_XSHM
 #include <sys/types.h>
@@ -179,8 +179,7 @@ struct _MfwXvImageFormat {
  */
 struct _MfwXvImageBuffer {
   GstBuffer   buffer;
-  //GstBufferMeta buffer;
-    
+
   /* Reference to the xvimagesink we belong to */
   MfwXvImageSink *xvimagesink;
 

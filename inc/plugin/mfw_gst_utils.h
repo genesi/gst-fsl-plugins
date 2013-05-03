@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright (c) 2008-2012, Freescale Semiconductor, Inc. 
  *
  */
 
@@ -54,7 +54,7 @@
 #define STR(s)      _STR(s)
 
 #include <stdio.h>
-//#include <stdlib.h>
+#include <stdlib.h>
 #include <string.h>
 
 
@@ -76,6 +76,13 @@
 #define PURPLE_STR(format,...)      COLORFUL_STR(COLOR_PURPLE,format,##__VA_ARGS__)
 #define CYAN_STR(format,...)        COLORFUL_STR(COLOR_CYAN,format,##__VA_ARGS__)
 
+#define MFW_WEAK_ASSERT(condition) \
+  do {\
+    if (!(condition)){\
+      g_print(RED_STR("ASSERTION FAILED in %s:%d\n", __FILE__, __LINE__));\
+    }\
+  }while(0)
+
 
 /* version info print */
 #define PRINT_CORE_VERSION(ver)\
@@ -88,6 +95,10 @@
         g_print(GREEN_STR("%s %s build on %s %s.\n", #ver,(ver),__DATE__,__TIME__));\
     }while(0)
 
+#define PRINT_FINALIZE(name)\
+    do {\
+        g_print(GREEN_STR("[--->FINALIZE %s\n", (name)));\
+    }while(0)
 
 
 /* bit mask flag operation */
@@ -109,18 +120,28 @@
     ((((data)+7)>>3)<<3)
 
 /* resource related debug defines */
-typedef enum{
-    RES_MEM = 0,
-    RES_FILE_DEVICE = 1,
-    RES_GSTBUFFER = 2,
-    RES_GSTADAPTER =3,
-}FSL_GST_RESTYPE;
+typedef enum
+{
+  RES_MEM = 0,
+  RES_FILE_DEVICE = 1,
+  RES_GSTBUFFER = 2,
+  RES_GSTADAPTER = 3,
+  RES_TYPE_MAX,
+} Fsl_Resource_Type;
 
+
+#include <time.h>
+
+#define TIME_PROFILE(func_body, timdiff) \
+  do{\
+    struct timespec tstart, tstop;\
+    clock_gettime(CLOCK_MONOTONIC, &tstart);\
+    func_body;\
+    clock_gettime(CLOCK_MONOTONIC, &tstop);\
+    (timdiff) = GST_SECOND*(tstop.tv_sec-tstart.tv_sec) + (tstop.tv_nsec-tstart.tv_nsec);\
+  }while(0)
 
 #ifdef MEMORY_DEBUG
-
-
-
 #include "mfw_gst_debug.h"
 
 #if 0
@@ -145,7 +166,7 @@ typedef enum{
 
 #define MM_FREE(ptr) fsl_dealloc_dbg((ptr), __FILE__, __LINE__)
 
-#define MM_INIT_DBG_MEM(mname)
+#define MM_INIT_DBG_MEM(mname) g_mmmodulename = (mname)
 #define MM_DEINIT_DBG_MEM() \
     print_non_free_resource();
 #define MM_CHECK(detail)
@@ -162,11 +183,11 @@ typedef enum{
 #endif
 #else
 #define MM_MALLOC(size)\
-    malloc((size))
+    g_malloc((size))
 #define MM_REALLOC(ptr, size)\
-        realloc((ptr), (size))
+        g_realloc((ptr), (size))
 #define MM_FREE(ptr)\
-    free((ptr))
+    g_free((ptr))
 
 #define MM_INIT_DBG_MEM(mname)
 #define MM_DEINIT_DBG_MEM()
@@ -180,16 +201,75 @@ typedef enum{
 #endif
 
 
+
 /* ranking of fsl gstreamer plugins */
 #define FSL_GST_RANK_HIGH (GST_RANK_PRIMARY+1)
 
+#define FSL_GST_DEFAULT_DECODER_RANK (GST_RANK_SECONDARY+2)
+#define FSL_GST_DEFAULT_DECODER_RANK_LEGACY (GST_RANK_SECONDARY+1)
+
+
+#define FSL_GST_CONF_DEFAULT_FILENAME "/usr/share/gst-fsl-plugins.conf"
+
+
 /* resource defines */
+
+
+/* video caps defines */
+#define VIDEO_RAW_CAPS_YUV \
+    "video/x-raw-yuv"
+#define VIDEO_RAW_CAPS_I420 \
+    "video/x-raw-yuv, format=(fourcc)I420"
+#define VIDEO_RAW_CAPS_NV12 \
+    "video/x-raw-yuv, format=(fourcc)NV12"
+#define VIDEO_RAW_CAPS_YV12 \
+    "video/x-raw-yuv, format=(fourcc)YV12"
+#define VIDEO_RAW_CAPS_Y42B \
+    "video/x-raw-yuv, format=(fourcc)Y42B"
+#define VIDEO_RAW_CAPS_Y444 \
+"video/x-raw-yuv, format=(fourcc)Y444"
+#define VIDEO_RAW_CAPS_Y800 \
+    "video/x-raw-yuv, format=(fourcc)Y800"
+#define VIDEO_RAW_CAPS_TILED \
+    "video/x-raw-yuv, format=(fourcc)TNVP"
+#define VIDEO_RAW_CAPS_TILED_FIELD \
+    "video/x-raw-yuv, format=(fourcc)TNVF"
+
+
+#define CAPS_FIELD_CROP_LEFT "crop-left"
+#define CAPS_FIELD_CROP_RIGHT "crop-right"
+#define CAPS_FIELD_CROP_TOP "crop-top"
+#define CAPS_FIELD_CROP_BOTTOM "crop-bottom"
+
+#define CAPS_FIELD_REQUIRED_BUFFER_NUMBER "num-buffers-required"
+
 #define PARSER_VIDEOPAD_TEMPLATE_NAME "video_%02d"
 #define PARSER_AUDIOPAD_TEMPLATE_NAME "audio_%02d"
 
 #define FSL_GST_MM_PLUGIN_AUTHOR "Multimedia Team <shmmmw@freescale.com>"
-#define FSL_GST_MM_PLUGIN_PACKAGE_NAME "Gstreamer Multimedia Plugins (Freescale)"
+#define FSL_GST_MM_PLUGIN_PACKAGE_NAME "Freescle Gstreamer Multimedia Plugins"
 #define FSL_GST_MM_PLUGIN_PACKAGE_ORIG "http://www.freescale.com"
+#define FSL_GST_MM_PLUGIN_LICENSE "LGPL"
+
+#define FSL_GST_MM_PLUGIN_NAME_SUBFIX ".imx"
+
+#define FSL_GST_PLUGIN_DEFINE(name, description, initfunc)\
+  GST_PLUGIN_DEFINE(GST_VERSION_MAJOR,\
+      GST_VERSION_MINOR,\
+      name FSL_GST_MM_PLUGIN_NAME_SUBFIX,\
+      description,\
+      initfunc,\
+      VERSION,\
+      FSL_GST_MM_PLUGIN_LICENSE,\
+      FSL_GST_MM_PLUGIN_PACKAGE_NAME, FSL_GST_MM_PLUGIN_PACKAGE_ORIG)
+
+#define FSL_GST_ELEMENT_SET_DETAIL_SIMPLE(element_class, longname, klass, descrption) \
+  do {\
+    gst_element_class_set_details_simple ((element_class), (longname),\
+      (klass), (descrption),\
+      FSL_GST_MM_PLUGIN_AUTHOR);\
+  }while(0)
+
 
 #define FSL_MM_IOCTL(device, request, errorroute, ...)\
     do{\
@@ -229,12 +309,13 @@ typedef enum{
 #define MIN_RESOLUTION_HEIGHT   64
 #endif
 
-enum field_info {
-    FIELD_NONE,
-    FIELD_INTERLACED_TB,
-    FIELD_INTERLACED_BT,
-    FIELD_TOP,
-    FIELD_BOTTOM,
+enum field_info
+{
+  FIELD_NONE,
+  FIELD_INTERLACED_TB,
+  FIELD_INTERLACED_BT,
+  FIELD_TOP,
+  FIELD_BOTTOM,
 };
 
 /*=============================================================================
@@ -253,10 +334,11 @@ enum field_info {
 #define BM_TRACE_BUFFER(...)
 #endif
 
-typedef enum {
-    BMDIRECT = 0,
-	BMINDIRECT = 1
-}BMMode;
+typedef enum
+{
+  BMDIRECT = 0,
+  BMINDIRECT = 1
+} BMMode;
 
 #define BM_FLAG_NOT_RENDER (GST_BUFFER_FLAG_LAST<<1)
 #define BM_FLAG_REFED (GST_BUFFER_FLAG_LAST<<2)
@@ -264,9 +346,9 @@ typedef enum {
 
 
 static BMMode bm_mode = BMDIRECT;
-static GSList * bm_list = NULL;
+static GSList *bm_list = NULL;
 static gint bm_buf_num = 0;
-static  gboolean bm_get_buf_init = FALSE;
+static gboolean bm_get_buf_init = FALSE;
 
 #define BM_CLEAN_LIST do{\
         while(bm_list){\
@@ -441,7 +523,7 @@ static  gboolean bm_get_buf_init = FALSE;
 #define BM_GET_MODE bm_mode
 #define BM_GET_BUFFERNUM (bm_buf_num+EXT_BUFFER_NUM)
 
-#endif//(DIRECT_RENDER_VERSION==2)
+#endif //(DIRECT_RENDER_VERSION==2)
 
 
 /*=============================================================================
@@ -456,16 +538,17 @@ static  gboolean bm_get_buf_init = FALSE;
 #define KEY_FRAME_ARRAY (1<<KEY_FRAME_SHIFT)
 #define KEY_FRAME_MASK (KEY_FRAME_ARRAY-1)
 
-struct sfd_frames_info {
-    int total_frames;
-    int dropped_frames;
-    int dropped_iframes;
-    int is_dropped_iframes;
-    int estimate_decoding_time;
-    int decoded_time;
-	int curr_nonekey_frames, total_key_frames;
-    int key_frames_interval[8];
-    struct timeval tv_start, tv_stop;
+struct sfd_frames_info
+{
+  int total_frames;
+  int dropped_frames;
+  int dropped_iframes;
+  int is_dropped_iframes;
+  int estimate_decoding_time;
+  int decoded_time;
+  int curr_nonekey_frames, total_key_frames;
+  int key_frames_interval[8];
+  struct timeval tv_start, tv_stop;
 };
 
 #define INIT_SFD_INFO(x)                \
@@ -573,30 +656,29 @@ POST-CONDITIONS:   	    None
 
 IMPORTANT NOTES:   	    None
 =============================================================================*/
-static GstFlowReturn Strategy_FD(int is_keyframes,
-            struct sfd_frames_info * psfd_info
-            )
+static GstFlowReturn
+Strategy_FD (int is_keyframes, struct sfd_frames_info *psfd_info)
 {
-    psfd_info->total_frames++;
-	psfd_info->curr_nonekey_frames++;
+  psfd_info->total_frames++;
+  psfd_info->curr_nonekey_frames++;
 
-    if (is_keyframes) {
-        (psfd_info)->is_dropped_iframes = 0;
-        (psfd_info)->key_frames_interval[(psfd_info)->total_key_frames&(KEY_FRAME_MASK)]
-            = (psfd_info)->curr_nonekey_frames;
-        (psfd_info)->total_key_frames++;
-	    (psfd_info)->curr_nonekey_frames = 0;
+  if (is_keyframes) {
+    (psfd_info)->is_dropped_iframes = 0;
+    (psfd_info)->
+        key_frames_interval[(psfd_info)->total_key_frames & (KEY_FRAME_MASK)]
+        = (psfd_info)->curr_nonekey_frames;
+    (psfd_info)->total_key_frames++;
+    (psfd_info)->curr_nonekey_frames = 0;
+  }
+  if ((psfd_info)->is_dropped_iframes) {
+    if (!(is_keyframes)) {
+      (psfd_info)->dropped_frames++;
+      GST_WARNING ("SFD info:\ntotal frames : %d,\tdropped frames : %d.\n",
+          (psfd_info)->total_frames, (psfd_info)->dropped_frames);
+      return GST_FLOW_ERROR;
     }
-    if ((psfd_info)->is_dropped_iframes)
-    {
-        if (!(is_keyframes)) {
-            (psfd_info)->dropped_frames++;
-            GST_WARNING("SFD info:\ntotal frames : %d,\tdropped frames : %d.\n",
-                (psfd_info)->total_frames,(psfd_info)->dropped_frames);
-            return GST_FLOW_ERROR;
-        }
-    }
-    return GST_FLOW_OK;
+  }
+  return GST_FLOW_OK;
 }
 
 #endif
@@ -612,15 +694,18 @@ ARGUMENTS PASSED: buffer , buffer size
 
 =============================================================================*/
 //*
-static void printbuf(char * buf, int size)
+static void
+printbuf (char *buf, int size)
 {
-    int i;
-    for (i=0;i<size;i++){
-        if ((i & 0xf)==0) g_print("%06x: ", i);
-        g_print("%02x ", buf[i]);
-        if ((i & 0xf)==0xf) g_print("\n");
-    }
-    g_print("\n");
+  int i;
+  for (i = 0; i < size; i++) {
+    if ((i & 0xf) == 0)
+      g_print ("%06x: ", i);
+    g_print ("%02x ", buf[i]);
+    if ((i & 0xf) == 0xf)
+      g_print ("\n");
+  }
+  g_print ("\n");
 }
 
 
@@ -636,21 +721,22 @@ RETURN VALUE:            chip code
 //*
 
 #define CHIPCODE(a,b,c,d)( (((unsigned int)((a)))<<24) | (((unsigned int)((b)))<<16)|(((unsigned int)((c)))<<8)|(((unsigned int)((d)))))
-typedef enum {
-      CC_MX23 = CHIPCODE('M', 'X', '2', '3'),
-      CC_MX25 = CHIPCODE('M', 'X', '2', '5'),
-      CC_MX27 = CHIPCODE('M', 'X', '2', '7'),
-      CC_MX28 = CHIPCODE('M', 'X', '2', '8'),
-      CC_MX31 = CHIPCODE('M', 'X', '3', '1'),
-      CC_MX35 = CHIPCODE('M', 'X', '3', '5'),
-      CC_MX37 = CHIPCODE('M', 'X', '3', '7'),
-      CC_MX50 = CHIPCODE('M', 'X', '5', '0'),
-      CC_MX51 = CHIPCODE('M', 'X', '5', '1'),
-      CC_MX53 = CHIPCODE('M', 'X', '5', '3'),
-      CC_MX61 = CHIPCODE('M', 'X', '6', '1'),
-      CC_UNKN = CHIPCODE('U', 'N', 'K', 'N'),
+typedef enum
+{
+  CC_MX23 = CHIPCODE ('M', 'X', '2', '3'),
+  CC_MX25 = CHIPCODE ('M', 'X', '2', '5'),
+  CC_MX27 = CHIPCODE ('M', 'X', '2', '7'),
+  CC_MX28 = CHIPCODE ('M', 'X', '2', '8'),
+  CC_MX31 = CHIPCODE ('M', 'X', '3', '1'),
+  CC_MX35 = CHIPCODE ('M', 'X', '3', '5'),
+  CC_MX37 = CHIPCODE ('M', 'X', '3', '7'),
+  CC_MX50 = CHIPCODE ('M', 'X', '5', '0'),
+  CC_MX51 = CHIPCODE ('M', 'X', '5', '1'),
+  CC_MX53 = CHIPCODE ('M', 'X', '5', '3'),
+  CC_MX6Q = CHIPCODE ('M', 'X', '6', 'Q'),
+  CC_UNKN = CHIPCODE ('U', 'N', 'K', 'N'),
 
-}CHIP_CODE;
+} CHIP_CODE;
 
 #define IS_PXP(ccode) \
     (((ccode)==CC_MX23) \
@@ -665,82 +751,80 @@ typedef enum {
     ||((ccode)==CC_MX37)\
     ||((ccode)==CC_MX51)\
     ||((ccode)==CC_MX53)\
+    ||((ccode)==CC_MX6Q)\
     ||((ccode)==CC_UNKN))
 
-static CHIP_CODE getChipCode(void)
+static CHIP_CODE
+getChipCode (void)
 {
-#if 0
-    FILE *fp = NULL;
-    char buf[100], *p;
-    char chip_name[3];
-    int len=0, i;
-    int chip_num;
-    CHIP_CODE cc = CC_UNKN;
-    fp = fopen("/proc/cpuinfo","r");
-    if (fp == NULL){
-      //printf("open failed\n");
-      return cc;
-    }
-    while (!feof(fp)) {
-        p = fgets(buf, 100, fp);
-        p=strstr(buf,"Hardware");
-        if (p!= NULL) {
-            i = 0;
-            p = strstr(buf,"MX");
-            if (p) {
-                p+=2;
-                while((*p!='\n') && (*p!='\r') && (*p!='\t') && (*p!=' ') && (i<2)){
-                    chip_name[i++]=*p++;
-                }
-            }
-            break;
-        }
-    }
-
-    fclose(fp);
-
-    chip_name[2] = '\0';
-    chip_num = atoi(chip_name);
-
-    switch (chip_num){
-    case 23:
-            cc = CC_MX23;
-            break;
-    case 25:
-            cc = CC_MX25;
-            break;
-    case 27:
-            cc = CC_MX27;
-            break;
-    case 28:
-            cc = CC_MX28;
-            break;
-    case 31:
-            cc = CC_MX31;
-            break;
-    case 35:
-            cc = CC_MX35;
-            break;
-    case 37:
-            cc = CC_MX37;
-            break;
-    case 50:
-            cc = CC_MX50;
-            break;
-    case 51:
-            cc = CC_MX51;
-            break;
-    case 53:
-            cc = CC_MX53;
-            break;
-    default:
-            cc = CC_UNKN;
-            break;
-    }
-
+  FILE *fp = NULL;
+  char buf[100], *p, *rev;
+  char chip_name[3];
+  int len = 0, i;
+  int chip_num;
+  CHIP_CODE cc = CC_UNKN;
+  fp = fopen ("/proc/cpuinfo", "r");
+  if (fp == NULL) {
     return cc;
-#endif
-    return CC_MX51; //FIXME: hardcoded.
+  }
+  while (!feof (fp)) {
+    p = fgets (buf, 100, fp);
+    p = strstr (buf, "Revision");
+    if (p != NULL) {
+      rev = index (p, ':');
+      if (rev != NULL) {
+        rev++;
+        chip_num = strtoul (rev, NULL, 16);
+        chip_num >>= 12;
+        break;
+      }
+    }
+  }
+
+  fclose (fp);
+
+  switch (chip_num) {
+    case 0x23:
+      cc = CC_MX23;
+      break;
+    case 0x25:
+      cc = CC_MX25;
+      break;
+    case 0x27:
+      cc = CC_MX27;
+      break;
+    case 0x28:
+      cc = CC_MX28;
+      break;
+    case 0x31:
+      cc = CC_MX31;
+      break;
+    case 0x35:
+      cc = CC_MX35;
+      break;
+    case 0x37:
+      cc = CC_MX37;
+      break;
+    case 0x50:
+      cc = CC_MX50;
+      break;
+    case 0x51:
+      cc = CC_MX51;
+      break;
+    case 0x53:
+      cc = CC_MX53;
+      break;
+    case 0x63:
+    case 0x61:
+    case 0x60:
+      cc = CC_MX6Q;
+      break;
+    default:
+      cc = CC_UNKN;
+      break;
+  }
+
+  return cc;
 }
 
 /*=============================================================================
@@ -777,5 +861,4 @@ do {                                                            \
     }                                                           \
 }while(0);
 
-#endif//__MFW_GST_UTILS_H__
-
+#endif //__MFW_GST_UTILS_H__

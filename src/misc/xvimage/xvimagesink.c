@@ -132,6 +132,13 @@ GST_DEBUG_CATEGORY_STATIC (gst_debug_xvimagesink);
 #define GST_CAT_DEFAULT gst_debug_xvimagesink
 GST_DEBUG_CATEGORY_STATIC (GST_CAT_PERFORMANCE);
 
+#define IS_DMABLE_BUFFER(buffer) ( (GST_IS_BUFFER_META(buffer->_gst_reserved[G_N_ELEMENTS(buffer->_gst_reserved)-1])) \
+                                 || ( GST_IS_BUFFER(buffer) \
+                                 &&  GST_BUFFER_FLAG_IS_SET((buffer),GST_BUFFER_FLAG_LAST)))
+#define DMABLE_BUFFER_PHY_ADDR(buffer) (GST_IS_BUFFER_META(buffer->_gst_reserved[G_N_ELEMENTS(buffer->_gst_reserved)-1]) ? \
+                                        ((GstBufferMeta *)(buffer->_gst_reserved[G_N_ELEMENTS(buffer->_gst_reserved)-1]))->physical_data : \
+                                        GST_BUFFER_OFFSET(buffer))
+
 typedef struct
 {
   unsigned long flags;
@@ -207,12 +214,14 @@ static GstVideoSinkClass *parent_class = NULL;
 #define GST_XVIMAGE_BUFFER(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_XVIMAGE_BUFFER, MfwXvImageBuffer))
 #define GST_XVIMAGE_BUFFER_CAST(obj) ((MfwXvImageBuffer *)(obj))
 
+#if 0
 #define IS_DMABLE_BUFFER(buffer) ( (GST_IS_BUFFER_META(buffer->_gst_reserved[G_N_ELEMENTS(buffer->_gst_reserved)-1])) \
                                  || ( GST_IS_BUFFER(buffer) \
                                  &&  GST_BUFFER_FLAG_IS_SET((buffer),GST_BUFFER_FLAG_LAST)))
 #define DMABLE_BUFFER_PHY_ADDR(buffer) (GST_IS_BUFFER_META(buffer->_gst_reserved[G_N_ELEMENTS(buffer->_gst_reserved)-1]) ? \
                                         ((GstBufferMeta *)(buffer->_gst_reserved[G_N_ELEMENTS(buffer->_gst_reserved)-1]))->physical_data : \
                                         GST_BUFFER_OFFSET(buffer))
+#endif
 
 /* This function destroys a MfwXvImage handling XShm availability */
 static void
@@ -521,7 +530,6 @@ void free_hwbuffer(gpointer data)
     }
 }
 
-
 /* This function handles MfwXvImage creation depending on XShm availability */
 static MfwXvImageBuffer *
 gst_xvimagesink_xvimage_new (MfwXvImageSink * xvimagesink, GstCaps * caps)
@@ -740,7 +748,6 @@ gst_xvimagesink_xvimage_new (MfwXvImageSink * xvimagesink, GstCaps * caps)
   GST_BUFFER_DATA (xvimage) = (guchar *) xvimage->xvimage->data;
   GST_BUFFER_SIZE (xvimage) = xvimage->size;
 
-#if 1
   gint index;
   GstBufferMeta *bufmeta;
   unsigned int *vaddr, *paddr;    
@@ -750,19 +757,18 @@ gst_xvimagesink_xvimage_new (MfwXvImageSink * xvimagesink, GstCaps * caps)
     return GST_FLOW_ERROR;
   }
   xvimage->buffer = *gst_buffer_new();
-  GST_BUFFER_SIZE(&xvimage->buffer) = xvimage->size;
-  GST_BUFFER_DATA(&xvimage->buffer)= vaddr;
+  GST_BUFFER_SIZE(xvimage) = xvimage->size;
+  GST_BUFFER_DATA(xvimage)= vaddr;
   bufmeta = gst_buffer_meta_new();
   index = G_N_ELEMENTS(xvimage->buffer._gst_reserved)-1;
   bufmeta->physical_data = (gpointer) paddr;
   xvimage->buffer._gst_reserved[index] = bufmeta;
   bufmeta->priv = handle;
-  GST_BUFFER_MALLOCDATA(&xvimage->buffer) = bufmeta;
-  GST_BUFFER_FREE_FUNC(&xvimage->buffer) = free_hwbuffer;
+  GST_BUFFER_MALLOCDATA(xvimage) = bufmeta;
+  GST_BUFFER_FREE_FUNC(xvimage) = free_hwbuffer;
   succeeded = TRUE;
   //xvimage->buffer = *gst_buffer_meta_new ();
   //xvimage->buffer = GST_BUFFER_CAST(&xvimage);
-#endif
 
   g_mutex_unlock (xvimagesink->x_lock);
 
@@ -1658,6 +1664,9 @@ gst_xvimagesink_get_xv_support (MfwXvImageSink * xvimagesink,
         break;
       }
       case XvYUV:
+        // work-around: don't advertise anything buth I420
+	if (formats[i].id != GST_MAKE_FOURCC ('I', '4', '2', '0'))
+	    continue;
         format_caps = gst_caps_new_simple ("video/x-raw-yuv",
             "format", GST_TYPE_FOURCC, formats[i].id,
             "width", GST_TYPE_INT_RANGE, 1, max_w,
@@ -2466,9 +2475,9 @@ gst_xvimagesink_show_frame (GstVideoSink * vsink, GstBuffer * buf)
     }
 
     if (IS_DMABLE_BUFFER(buf)){
-	intptr_t x[2] = { 0xbeefc0de, /*xvimagesink->xvimage->buffer.phy_addr*/ DMABLE_BUFFER_PHY_ADDR(buf) };
+	intptr_t x[2] = { 0xbeefc0de, DMABLE_BUFFER_PHY_ADDR(buf) };
 	memcpy (xvimagesink->xvimage->xvimage->data, x, sizeof(x));
-	GST_INFO_OBJECT(xvimagesink, "mfwbuffer: %p", DMABLE_BUFFER_PHY_ADDR(buf));
+	GST_DEBUG_OBJECT(xvimagesink, "mfwbuffer: %p", DMABLE_BUFFER_PHY_ADDR(buf));
     } else {
 	memcpy (xvimagesink->xvimage->xvimage->data, GST_BUFFER_DATA (buf),
 		MIN (GST_BUFFER_SIZE (buf), xvimagesink->xvimage->size));
@@ -2682,7 +2691,7 @@ reuse_last_caps:
   }
 
   *buf = GST_BUFFER_CAST (xvimage);
-
+ 
 beach:
   if (intersection) {
     gst_caps_unref (intersection);
