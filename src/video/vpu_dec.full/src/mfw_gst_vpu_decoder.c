@@ -69,7 +69,6 @@
 #define DEFAULT_FRAME_BUFFER_ALIGNMENT_H 16
 #define DEFAULT_FRAME_BUFFER_ALIGNMENT_V 16
 
-MfwGstVPU_Dec *vpudec_global_ptr = NULL;
 static gint mutex_cnt = 0;
 /* table with framerates expressed as fractions */
 static const gint fpss[][2] = { {24000, 1001},
@@ -115,7 +114,7 @@ static gboolean vpudec_preparevc1apheader (unsigned char *pDestBuffer,
     unsigned char *pDataBuffer,
     unsigned char *pAucHdrBuffer, int aucHdrLen, int *pLen);
 void mfw_vpudec_set_field (MfwGstVPU_Dec * vpu_dec, GstBuffer * buf);
-void mfw_gst_vpudec_vpu_finalize (void);
+void mfw_gst_vpudec_vpu_finalize (MfwGstVPU_Dec *vpu_dec);
 /*======================================================================================
                                      GLOBAL VARIABLES
 =======================================================================================*/
@@ -198,7 +197,7 @@ gboolean
 vpu_mutex_lock (GMutex * mutex, gboolean ftry)
 {
   gboolean result = TRUE;
-  if (!mutex || !vpudec_global_ptr) {
+  if (!mutex) {
     GST_DEBUG (">>VPU_DEC: lock mutex is NULL cnt=%d", mutex_cnt);
     return FALSE;
   }
@@ -230,7 +229,7 @@ IMPORTANT NOTES:    None
 void
 vpu_mutex_unlock (GMutex * mutex)
 {
-  if (!mutex || !vpudec_global_ptr) {
+  if (!mutex) {
     GST_DEBUG (">>VPU_DEC: unlock mutex is NULL cnt=%d", mutex_cnt);
     return;
   }
@@ -2740,7 +2739,7 @@ GstFlowReturn
 mfw_gst_vpudec_render (MfwGstVPU_Dec * vpu_dec)
 {
   GstFlowReturn retval = GST_FLOW_OK;
-  if (vpudec_global_ptr == NULL)
+  if (vpu_dec == NULL)
     return GST_FLOW_OK;
 
   if ((vpu_dec->frame_drop_allowed) && (vpu_dec->skipmode > SKIP_NONE)) {
@@ -2832,7 +2831,7 @@ mfw_gst_vpudec_continue_looping (MfwGstVPU_Dec * vpu_dec, guint loop_cnt)
 {
   gboolean fContinue = FALSE;
   RetCode vpu_ret = RETCODE_SUCCESS;
-  if (vpudec_global_ptr == NULL)
+  if (vpu_dec == NULL)
     return FALSE;
 
   vpu_dec->decParam->chunkSize = 0;
@@ -3069,7 +3068,7 @@ mfw_gst_vpudec_chain (GstPad * pad, GstBuffer * buffer)
   gint ret = VPU_DEC_SUCCESS;
 
   // handle exit conditions
-  if ((vpu_dec == NULL) || (vpudec_global_ptr == NULL))
+  if (vpu_dec == NULL)
     return GST_FLOW_OK;
 
   if (vpu_dec->flushing || vpu_dec->in_cleanup)
@@ -3207,9 +3206,6 @@ mfw_gst_vpudec_chain (GstPad * pad, GstBuffer * buffer)
   do {
     vpu_dec->loop_cnt++;
 
-    if (vpudec_global_ptr == NULL)
-      return GST_FLOW_OK;
-
     if (vpu_dec->flushing || vpu_dec->in_cleanup)
       goto done;
 
@@ -3237,10 +3233,6 @@ mfw_gst_vpudec_chain (GstPad * pad, GstBuffer * buffer)
         retval = GST_FLOW_OK;
 
       vpu_dec->decoding_completed = FALSE;
-
-      // a pause could have locked the pipeline so could exit and vpu is dead so exit
-      if (vpudec_global_ptr == NULL)
-        return GST_FLOW_OK;
 
       if (retval != GST_FLOW_OK) {
         //GST_ERROR (">>VPU_DEC: Render frame failed \n");
@@ -3375,10 +3367,6 @@ mfw_gst_vpudec_chain (GstPad * pad, GstBuffer * buffer)
 
       vpu_dec->decoding_completed = FALSE;
 
-      // a pause could have locked the pipeline so could exit and vpu is dead so exit
-      if (vpudec_global_ptr == NULL)
-        return GST_FLOW_OK;
-
       if (retval != GST_FLOW_OK) {
 
         retval = GST_FLOW_OK;
@@ -3397,7 +3385,7 @@ mfw_gst_vpudec_chain (GstPad * pad, GstBuffer * buffer)
 
 done:
 #if 0
-  if (!vpudec_global_ptr || vpu_dec->in_cleanup)
+  if (!vpu_dec || vpu_dec->in_cleanup)
     return GST_FLOW_OK;
 #endif
   if (vpu_dec->trymutex) {
@@ -3457,7 +3445,7 @@ mfw_gst_vpudec_src_event (GstPad * src_pad, GstEvent * event)
   MfwGstVPU_Dec *vpu_dec = MFW_GST_VPU_DEC (gst_pad_get_parent (src_pad));
 
 
-  if ((vpudec_global_ptr == NULL) || vpu_dec->in_cleanup) {
+  if ((vpu_dec == NULL) || vpu_dec->in_cleanup) {
     goto bail;
   }
 
@@ -3532,7 +3520,7 @@ mfw_gst_vpudec_sink_event (GstPad * pad, GstEvent * event)
   gint flushsize = 0;
   guint offset = 0;
 
-  if ((vpudec_global_ptr == NULL) || vpu_dec->in_cleanup)
+  if ((vpu_dec == NULL) || vpu_dec->in_cleanup)
     return GST_FLOW_OK;
 
   width = vpu_dec->initialInfo->picWidth;
@@ -3739,7 +3727,7 @@ mfw_gst_vpudec_cleanup (MfwGstVPU_Dec * vpu_dec)
 {
   RetCode vpu_ret = RETCODE_SUCCESS;
 
-  if (vpudec_global_ptr == NULL)
+  if (vpu_dec == NULL)
     return;
 
   vpu_dec->in_cleanup = TRUE;
@@ -3750,7 +3738,7 @@ mfw_gst_vpudec_cleanup (MfwGstVPU_Dec * vpu_dec)
   GST_DEBUG (">>>>VPU_DEC: Cleanup frame started %d",
       vpu_dec->is_frame_started);
 
-  if (vpu_dec->is_frame_started) {
+  if (1) { //(vpu_dec->is_frame_started) {
     // need this to avoid hangs on vpu close which will not close if outstanding
     // decode - best way to kill an oustanding decode is flush the bitstream buffer
     vpu_ret = vpu_DecUpdateBitstreamBuffer (*(vpu_dec->handle), 0);
@@ -3772,7 +3760,6 @@ mfw_gst_vpudec_cleanup (MfwGstVPU_Dec * vpu_dec)
     mfw_gst_vpu_dec_thread_free (vpu_dec);
   }
 #endif
-
 
   mfw_gst_vpudec_FrameBufferRelease (vpu_dec);
 
@@ -3845,6 +3832,7 @@ mfw_gst_vpudec_cleanup (MfwGstVPU_Dec * vpu_dec)
   }
 
   vpu_dec->clock_base = 0;
+
   GST_DEBUG (">>>>VPU_DEC: End Cleanup ");
 
 }
@@ -3923,7 +3911,7 @@ static GstStateChangeReturn mfw_gst_vpudec_change_state
     case GST_STATE_CHANGE_READY_TO_PAUSED:
     {
       GST_DEBUG (">>VPU_DEC: State: Ready to Paused");
-      if (vpudec_global_ptr == NULL)
+      if (vpu_dec == NULL)
         return GST_STATE_CHANGE_SUCCESS;
 
       vpu_dec->vpu_init = FALSE;
@@ -4004,7 +3992,7 @@ static GstStateChangeReturn mfw_gst_vpudec_change_state
     case GST_STATE_CHANGE_PAUSED_TO_PLAYING:
     case 0x24:                 /* playing to playing - get this after first frame pushed downstream */
     {
-      if (vpudec_global_ptr == NULL)
+      if (vpu_dec == NULL)
         return GST_STATE_CHANGE_SUCCESS;
 
       if (GST_ELEMENT (vpu_dec)->clock) {
@@ -4030,7 +4018,7 @@ static GstStateChangeReturn mfw_gst_vpudec_change_state
   switch (transition) {
     case GST_STATE_CHANGE_PLAYING_TO_PAUSED:
     {
-      if (vpudec_global_ptr == NULL)
+      if (vpu_dec == NULL)
         return GST_STATE_CHANGE_SUCCESS;
 
       GST_DEBUG (">>VPU_DEC: State: Playing to Paused");
@@ -4100,7 +4088,7 @@ static GstStateChangeReturn mfw_gst_vpudec_change_state
         vpu_dec->gst_buffer = NULL;
       }
 
-      if (vpudec_global_ptr == NULL || vpu_dec->in_cleanup)
+      if (vpu_dec == NULL || vpu_dec->in_cleanup)
         return GST_STATE_CHANGE_SUCCESS;
 
       GST_MUTEX
@@ -4126,7 +4114,7 @@ static GstStateChangeReturn mfw_gst_vpudec_change_state
     case GST_STATE_CHANGE_READY_TO_NULL:
     {
       g_print ("\n>>VPU_DEC: State: Ready to Null\n");
-      if (vpudec_global_ptr == NULL)
+      if (vpu_dec == NULL)
         return GST_STATE_CHANGE_SUCCESS;
 
       GST_MUTEX
@@ -4184,7 +4172,7 @@ mfw_gst_vpudec_set_property (GObject * object, guint prop_id,
     const GValue * value, GParamSpec * pspec)
 {
   MfwGstVPU_Dec *vpu_dec = MFW_GST_VPU_DEC (object);
-  if (vpudec_global_ptr == NULL)
+  if (vpu_dec == NULL)
     return;
 
   switch (prop_id) {
@@ -4296,7 +4284,7 @@ mfw_gst_vpudec_get_property (GObject * object, guint prop_id,
 {
 
   MfwGstVPU_Dec *vpu_dec = MFW_GST_VPU_DEC (object);
-  if (vpudec_global_ptr == NULL)
+  if (vpu_dec == NULL)
     return;
 
   switch (prop_id) {
@@ -4886,7 +4874,7 @@ mfw_gst_vpudec_finalize (GObject * object)
     destroyTSManager (vpu_dec->pTS_Mgr);
     (vpu_dec->pTS_Mgr) = NULL;
   }
-  mfw_gst_vpudec_vpu_finalize ();
+  mfw_gst_vpudec_vpu_finalize (vpu_dec);
 
   PRINT_FINALIZE ("vpu_dec");
 
@@ -5071,8 +5059,6 @@ mfw_gst_vpudec_init (MfwGstVPU_Dec * vpu_dec, MfwGstVPU_DecClass * gclass)
 
   CHIP_CODE chip_code = getChipCode ();
 
-  vpudec_global_ptr = vpu_dec;
-
   /* create the sink and src pads */
   // vpu_dec->sinkpad =
   //     gst_pad_new_from_template (gst_element_class_get_pad_template
@@ -5234,13 +5220,12 @@ PRE-CONDITIONS:     None
 POST-CONDITIONS:    None
 IMPORTANT NOTES:    None
 ========================================================================================*/
-void __attribute__ ((destructor)) mfw_gst_vpudec_vpu_finalize (void);
+void __attribute__ ((destructor)) mfw_gst_vpudec_vpu_finalize (MfwGstVPU_Dec *vpu_dec);
 
 void
-mfw_gst_vpudec_vpu_finalize (void)
+mfw_gst_vpudec_vpu_finalize (MfwGstVPU_Dec *vpu_dec)
 {
   RetCode vpu_ret = RETCODE_SUCCESS;
-  MfwGstVPU_Dec *vpu_dec = vpudec_global_ptr;
   if (vpu_dec == NULL) {
     GST_WARNING (">>VPU_DEC: vpu_dec is null,exit no clean up needed");
     return;
@@ -5270,8 +5255,7 @@ mfw_gst_vpudec_vpu_finalize (void)
     vpu_dec->vpu_chipinit = FALSE;
   }
 
-  GST_DEBUG (">>VPU_DEC: vpu instance 0x%x destroyed.", vpudec_global_ptr);
-  vpudec_global_ptr = NULL;
+  GST_DEBUG (">>VPU_DEC: vpu instance 0x%x destroyed.", vpu_dec);
   return;
 
 }
