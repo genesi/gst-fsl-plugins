@@ -1,3 +1,10 @@
+gst-fsl-plugin (3.0.1-0genesi2) maverick; urgency=low
+
+  * remove global instance pointer.
+  * install missing library.
+
+ -- Ahmed Ammar <aammar@genesi-usa.com>  Fri, 19 May 2013 22:08:45 +0200
+
 gst-fsl-plugin (3.0.1-0genesi1) natty; urgency=low
 
   * Update to 3.0.1
