@@ -1,3 +1,9 @@
+gst-fsl-plugin (3.0.1-0genesi3) maverick; urgency=low
+
+  * fixes to vpudecoder
+
+ -- Ahmed Ammar <aammar@genesi-usa.com>  Tue, 25 Jun 2013 14:08:45 +0200
+
 gst-fsl-plugin (3.0.1-0genesi2) maverick; urgency=low
 
   * remove global instance pointer.

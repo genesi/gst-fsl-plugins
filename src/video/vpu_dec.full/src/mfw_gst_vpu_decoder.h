@@ -349,6 +349,7 @@ typedef struct _MfwGstVPU_Dec
   vpu_mem_desc bit_stream_buf;
   CodStd codec;                 // codec standard to be selected 
   GMutex *vpu_mutex;            // mutex for handling decode states
+  gint mutex_cnt;
   guint picWidth;               // Width of the Image obtained through caps negotiation
   guint picHeight;              // Height of the Image obtained through caps negotiation 
   gboolean file_play_mode;      // Flag for file play mode 

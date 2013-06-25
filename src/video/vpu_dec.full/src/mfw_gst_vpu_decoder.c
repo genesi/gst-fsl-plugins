@@ -69,7 +69,6 @@
 #define DEFAULT_FRAME_BUFFER_ALIGNMENT_H 16
 #define DEFAULT_FRAME_BUFFER_ALIGNMENT_V 16
 
-static gint mutex_cnt = 0;
 /* table with framerates expressed as fractions */
 static const gint fpss[][2] = { {24000, 1001},
 {24, 1}, {25, 1}, {30000, 1001},
@@ -121,8 +120,8 @@ void mfw_gst_vpudec_vpu_finalize (MfwGstVPU_Dec *vpu_dec);
 /*======================================================================================
                                      LOCAL FUNCTIONS
 =======================================================================================*/
-gboolean vpu_mutex_lock (GMutex * mutex, gboolean ftry);
-void vpu_mutex_unlock (GMutex * mutex);
+gboolean vpu_mutex_lock (MfwGstVPU_Dec *, GMutex * mutex, gboolean ftry);
+void vpu_mutex_unlock (MfwGstVPU_Dec *, GMutex * mutex);
 gint mfw_gst_vpudec_FrameBufferInit (MfwGstVPU_Dec *, FrameBuffer *, gint);
 
 void mfw_gst_vpudec_FrameBufferRelease (MfwGstVPU_Dec *);
@@ -194,22 +193,22 @@ POST-CONDITIONS:    None
 IMPORTANT NOTES:    None
 =============================================================================*/
 gboolean
-vpu_mutex_lock (GMutex * mutex, gboolean ftry)
+vpu_mutex_lock (MfwGstVPU_Dec *vpu_dec, GMutex * mutex, gboolean ftry)
 {
   gboolean result = TRUE;
   if (!mutex) {
-    GST_DEBUG (">>VPU_DEC: lock mutex is NULL cnt=%d", mutex_cnt);
+    GST_DEBUG (">>VPU_DEC: lock mutex is NULL cnt=%d", vpu_dec->mutex_cnt);
     return FALSE;
   }
   if (ftry) {
     result = g_mutex_trylock (mutex);
     if (result == FALSE) {
     } else {
-      mutex_cnt++;
+      vpu_dec->mutex_cnt++;
     }
   } else {
     g_mutex_lock (mutex);
-    mutex_cnt++;
+    vpu_dec->mutex_cnt++;
   }
   return result;
 }
@@ -227,13 +226,13 @@ POST-CONDITIONS:    None
 IMPORTANT NOTES:    None
 =============================================================================*/
 void
-vpu_mutex_unlock (GMutex * mutex)
+vpu_mutex_unlock (MfwGstVPU_Dec *vpu_dec, GMutex * mutex)
 {
   if (!mutex) {
-    GST_DEBUG (">>VPU_DEC: unlock mutex is NULL cnt=%d", mutex_cnt);
+    GST_DEBUG (">>VPU_DEC: unlock mutex is NULL cnt=%d", vpu_dec->mutex_cnt);
     return;
   }
-  mutex_cnt--;
+  vpu_dec->mutex_cnt--;
   g_mutex_unlock (mutex);
   return;
 }
@@ -3079,13 +3078,13 @@ mfw_gst_vpudec_chain (GstPad * pad, GstBuffer * buffer)
    * and in that case we should not
    * proceed with any decodes - either flushing or cleaning up
    */
-  if (vpu_mutex_lock (vpu_dec->vpu_mutex, TRUE) == FALSE) {
+  if (vpu_mutex_lock (vpu_dec, vpu_dec->vpu_mutex, TRUE) == FALSE) {
     GST_MUTEX (">>VPU_DEC: In chain but exiting since mutex is locked \
             by other thread or null mutex 0x%x\n", vpu_dec->vpu_mutex);
     gst_buffer_unref (buffer);
     return GST_FLOW_OK;
   } else {
-    GST_MUTEX (">>VPU_DEC: In chain mutex acquired cnt=%d\n", mutex_cnt);
+    GST_MUTEX (">>VPU_DEC: In chain mutex acquired cnt=%d\n", vpu_dec->mutex_cnt);
   }
 
   vpu_dec->trymutex = TRUE;
@@ -3214,19 +3213,19 @@ mfw_gst_vpudec_chain (GstPad * pad, GstBuffer * buffer)
       // render a frame
       if (mfw_gst_vpudec_prep_gstbuf (vpu_dec)) {
 
-        vpu_mutex_unlock (vpu_dec->vpu_mutex);
-        GST_MUTEX (">>VPU_DEC: unlock mutex before render cnt=%d\n", mutex_cnt);
+        vpu_mutex_unlock (vpu_dec, vpu_dec->vpu_mutex);
+        GST_MUTEX (">>VPU_DEC: unlock mutex before render cnt=%d\n", vpu_dec->mutex_cnt);
 
         retval = mfw_gst_vpudec_render (vpu_dec);
 
-        if (vpu_mutex_lock (vpu_dec->vpu_mutex, TRUE) == FALSE) {
+        if (vpu_mutex_lock (vpu_dec, vpu_dec->vpu_mutex, TRUE) == FALSE) {
           vpu_dec->trymutex = FALSE;
           GST_MUTEX
-              (">>VPU_DEC: after render - no mutex lock cnt=%d\n", mutex_cnt);
+              (">>VPU_DEC: after render - no mutex lock cnt=%d\n", vpu_dec->mutex_cnt);
           retval = GST_FLOW_ERROR;
         } else {
           GST_MUTEX
-              (">>VPU_DEC: after render - mutex lock cnt=%d\n", mutex_cnt);
+              (">>VPU_DEC: after render - mutex lock cnt=%d\n", vpu_dec->mutex_cnt);
         }
 
       } else
@@ -3237,7 +3236,7 @@ mfw_gst_vpudec_chain (GstPad * pad, GstBuffer * buffer)
       if (retval != GST_FLOW_OK) {
         //GST_ERROR (">>VPU_DEC: Render frame failed \n");
         retval = GST_FLOW_OK;
-        if (mutex_cnt && vpu_dec->must_copy_data && !vpu_dec->flushing
+        if (vpu_dec->mutex_cnt && vpu_dec->must_copy_data && !vpu_dec->flushing
             && !vpu_dec->in_cleanup)
           goto check_continue;
         else
@@ -3348,19 +3347,19 @@ mfw_gst_vpudec_chain (GstPad * pad, GstBuffer * buffer)
       // render a frame
       if (mfw_gst_vpudec_prep_gstbuf (vpu_dec)) {
 
-        vpu_mutex_unlock (vpu_dec->vpu_mutex);
-        GST_MUTEX (">>VPU_DEC: unlock mutex before render cnt=%d\n", mutex_cnt);
+        vpu_mutex_unlock (vpu_dec, vpu_dec->vpu_mutex);
+        GST_MUTEX (">>VPU_DEC: unlock mutex before render cnt=%d\n", vpu_dec->mutex_cnt);
 
         retval = mfw_gst_vpudec_render (vpu_dec);
 
-        if (vpu_mutex_lock (vpu_dec->vpu_mutex, TRUE) == FALSE) {
+        if (vpu_mutex_lock (vpu_dec, vpu_dec->vpu_mutex, TRUE) == FALSE) {
           vpu_dec->trymutex = FALSE;
           GST_MUTEX
-              (">>VPU_DEC: after render - no mutex lock cnt=%d\n", mutex_cnt);
+              (">>VPU_DEC: after render - no mutex lock cnt=%d\n", vpu_dec->mutex_cnt);
           retval = GST_FLOW_ERROR;
         } else {
           GST_MUTEX
-              (">>VPU_DEC: after render - mutex lock cnt=%d\n", mutex_cnt);
+              (">>VPU_DEC: after render - mutex lock cnt=%d\n", vpu_dec->mutex_cnt);
         }
 
       }
@@ -3370,7 +3369,7 @@ mfw_gst_vpudec_chain (GstPad * pad, GstBuffer * buffer)
       if (retval != GST_FLOW_OK) {
 
         retval = GST_FLOW_OK;
-        if (mutex_cnt && vpu_dec->must_copy_data && !vpu_dec->flushing
+        if (vpu_dec->mutex_cnt && vpu_dec->must_copy_data && !vpu_dec->flushing
             && !vpu_dec->in_cleanup)
           goto check_continue;
         else
@@ -3389,13 +3388,13 @@ done:
     return GST_FLOW_OK;
 #endif
   if (vpu_dec->trymutex) {
-    vpu_mutex_unlock (vpu_dec->vpu_mutex);
+    vpu_mutex_unlock (vpu_dec, vpu_dec->vpu_mutex);
     GST_MUTEX (">>VPU_DEC: Unlocking mutex at end of chain cnt=%d\n",
-        mutex_cnt);
+        vpu_dec->mutex_cnt);
   } else {
     GST_MUTEX
         (">>VPU_DEC: chain does not unlock mutex - might be cleaning up or flushing mutex_cnt=%d cleanup=%d\n",
-        mutex_cnt, vpu_dec->in_cleanup);
+        vpu_dec->mutex_cnt, vpu_dec->in_cleanup);
   }
 
   if (G_UNLIKELY (vpu_dec->profiling)) {
@@ -3573,17 +3572,17 @@ mfw_gst_vpudec_sink_event (GstPad * pad, GstEvent * event)
         return GST_FLOW_OK;
 
       GST_MUTEX (">>VPU_DEC: flush start before mutex_lock cnt=%d\n",
-          mutex_cnt);
-      vpu_mutex_lock (vpu_dec->vpu_mutex, FALSE);
+          vpu_dec->mutex_cnt);
+      vpu_mutex_lock (vpu_dec, vpu_dec->vpu_mutex, FALSE);
       vpu_dec->flushing = TRUE;
-      vpu_mutex_unlock (vpu_dec->vpu_mutex);
-      GST_MUTEX (">>VPU_DEC: flush start after mutex_lock cnt=%d\n", mutex_cnt);
+      vpu_mutex_unlock (vpu_dec, vpu_dec->vpu_mutex);
+      GST_MUTEX (">>VPU_DEC: flush start after mutex_lock cnt=%d\n", vpu_dec->mutex_cnt);
 
       if (!vpu_dec->vpu_init) {
         GST_DEBUG (">>VPU_DEC: Ignore flush since vpu not init ");
-        vpu_mutex_lock (vpu_dec->vpu_mutex, FALSE);
+        vpu_mutex_lock (vpu_dec, vpu_dec->vpu_mutex, FALSE);
         vpu_dec->flushing = FALSE;
-        vpu_mutex_unlock (vpu_dec->vpu_mutex);
+        vpu_mutex_unlock (vpu_dec, vpu_dec->vpu_mutex);
         result = gst_pad_push_event (vpu_dec->srcpad, event);
         return GST_FLOW_OK;
       }
@@ -3675,9 +3674,9 @@ mfw_gst_vpudec_sink_event (GstPad * pad, GstEvent * event)
       if (TRUE != result) {
         GST_ERROR (">>VPU_DEC: Error in pushing the event %d", event);
       }
-      vpu_mutex_lock (vpu_dec->vpu_mutex, FALSE);
+      vpu_mutex_lock (vpu_dec, vpu_dec->vpu_mutex, FALSE);
       vpu_dec->flushing = FALSE;
-      vpu_mutex_unlock (vpu_dec->vpu_mutex);
+      vpu_mutex_unlock (vpu_dec, vpu_dec->vpu_mutex);
       GST_DEBUG (">>VPU_DEC: End Flush stop event ");
 
       break;
@@ -4093,18 +4092,18 @@ static GstStateChangeReturn mfw_gst_vpudec_change_state
 
       GST_MUTEX
           (">>VPU_DEC: Before mutex lock in Paused to ready cnt=%d\n",
-          mutex_cnt);
+          vpu_dec->mutex_cnt);
 #if 0
       if (vpu_dec->vpu_mutex) {
-        vpu_mutex_lock (vpu_dec->vpu_mutex, FALSE);
+        vpu_mutex_lock (vpu_dec, vpu_dec->vpu_mutex, FALSE);
 
         // sometimes there was error in opening and/or init so still need cleanup here since pipeline was never started
         mfw_gst_vpudec_cleanup (vpu_dec);
         /* Unlock the mutex to free the mutex
          * in case of date terminated.
          */
-        vpu_mutex_unlock (vpu_dec->vpu_mutex);
-        mutex_cnt = 0;
+        vpu_mutex_unlock (vpu_dec, vpu_dec->vpu_mutex);
+        vpu_dec->mutex_cnt = 0;
         g_mutex_free (vpu_dec->vpu_mutex);
         vpu_dec->vpu_mutex = NULL;
       }
@@ -4118,18 +4117,18 @@ static GstStateChangeReturn mfw_gst_vpudec_change_state
         return GST_STATE_CHANGE_SUCCESS;
 
       GST_MUTEX
-          (">>VPU_DEC: Before mutex lock in Ready to NULL cnt=%d\n", mutex_cnt);
+          (">>VPU_DEC: Before mutex lock in Ready to NULL cnt=%d\n", vpu_dec->mutex_cnt);
 #if 0
       if (vpu_dec->vpu_mutex) {
-        vpu_mutex_lock (vpu_dec->vpu_mutex, FALSE);
+        vpu_mutex_lock (vpu_dec, vpu_dec->vpu_mutex, FALSE);
 
         // sometimes there was error in opening and/or init so still need cleanup here since pipeline was never started
         mfw_gst_vpudec_cleanup (vpu_dec);
         /* Unlock the mutex to free the mutex
          * in case of date terminated.
          */
-        vpu_mutex_unlock (vpu_dec->vpu_mutex);
-        mutex_cnt = 0;
+        vpu_mutex_unlock (vpu_dec, vpu_dec->vpu_mutex);
+        vpu_dec->mutex_cnt = 0;
         g_mutex_free (vpu_dec->vpu_mutex);
         vpu_dec->vpu_mutex = NULL;
       }
@@ -5220,7 +5219,6 @@ PRE-CONDITIONS:     None
 POST-CONDITIONS:    None
 IMPORTANT NOTES:    None
 ========================================================================================*/
-void __attribute__ ((destructor)) mfw_gst_vpudec_vpu_finalize (MfwGstVPU_Dec *vpu_dec);
 
 void
 mfw_gst_vpudec_vpu_finalize (MfwGstVPU_Dec *vpu_dec)
@@ -5232,18 +5230,18 @@ mfw_gst_vpudec_vpu_finalize (MfwGstVPU_Dec *vpu_dec)
   }
   GST_DEBUG (">>VPU_DEC: Destructor - final cleanup ");
 
-  if (vpu_dec->vpu_mutex) {
+  if (vpu_dec && vpu_dec->vpu_mutex) {
     GST_MUTEX (">>VPU_DEC: Before cleanup mutex lock cnt=%d,vpu:%p,%p\n",
-        mutex_cnt, vpu_dec, vpu_dec->vpu_mutex);
+        vpu_dec->mutex_cnt, vpu_dec, vpu_dec->vpu_mutex);
 
-    vpu_mutex_lock (vpu_dec->vpu_mutex, FALSE);
+    vpu_mutex_lock (vpu_dec, vpu_dec->vpu_mutex, FALSE);
     vpu_dec->in_cleanup = TRUE;
     mfw_gst_vpudec_cleanup (vpu_dec);
     /* Unlock the mutex to free the mutex
      * in case of date terminated.
      */
-    vpu_mutex_unlock (vpu_dec->vpu_mutex);
-    mutex_cnt = 0;
+    vpu_mutex_unlock (vpu_dec, vpu_dec->vpu_mutex);
+    vpu_dec->mutex_cnt = 0;
     g_mutex_free (vpu_dec->vpu_mutex);
     vpu_dec->vpu_mutex = NULL;
   } else {
