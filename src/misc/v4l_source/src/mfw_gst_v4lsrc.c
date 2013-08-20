@@ -63,7 +63,7 @@
                             LOCAL CONSTANTS
 =============================================================================*/
 /* None */
-#define DEFAULT_QUEUE_SIZE 6
+#define DEFAULT_QUEUE_SIZE 4
 /*=============================================================================
                 LOCAL TYPEDEFS (STRUCTURES, UNIONS, ENUMS)
 =============================================================================*/
@@ -293,6 +293,8 @@ mfw_gst_v4lsrc_buffer_finalize (MFWGstV4LSrcBuffer * v4lsrc_buffer)
     gst_buffer_ref (GST_BUFFER_CAST (v4lsrc_buffer));
   } else {
     GST_LOG ("free buffer %d\n", v4lsrc_buffer->num);
+    v4l_src->free_pool =
+      g_list_remove (v4l_src->free_pool, (gpointer) (v4lsrc_buffer->num));
   }
 }
 
@@ -1206,10 +1208,16 @@ mfw_gst_v4lsrc_buffer_new (MFWGstV4LSrc * v4l_src)
   v4lbuf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
   v4lbuf.memory = V4L2_MEMORY_MMAP;
 
-  if (g_list_length (v4l_src->free_pool) == 0) {
-    GST_WARNING ("no buffer available in pool");
-    return NULL;
+  int count = 0;
+  while (g_list_length (v4l_src->free_pool) == 0 && count < 100) {
+    //GST_WARNING ("no buffer available in pool");
+    //return NULL;
+    count++;
+    usleep(10000);
   }
+
+  if (g_list_length (v4l_src->free_pool) == 0)
+      return NULL;
 
   if (ioctl (v4l_src->fd_v4l, VIDIOC_DQBUF, &v4lbuf) < 0) {
     GST_ERROR (">>V4L_SRC: VIDIOC_DQBUF failed.");

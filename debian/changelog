@@ -1,3 +1,9 @@
+gst-fsl-plugin (3.0.1-0genesi4) maverick; urgency=low
+
+  * fixes to mfw_v4lsrc
+
+ -- Ahmed Ammar <aammar@genesi-usa.com>  Tue, 20 Aug 2013 14:08:45 +0200
+
 gst-fsl-plugin (3.0.1-0genesi3) maverick; urgency=low
 
   * fixes to vpudecoder
