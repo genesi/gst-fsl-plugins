@@ -48,6 +48,7 @@
 #include <sys/mman.h>
 #include <string.h>
 #include "mfw_gst_v4lsrc.h"
+                            
 #ifdef MX27
 #include "mxcfb.h"
 #else
@@ -1331,17 +1332,14 @@ mfw_gst_v4lsrc_get_caps (GstBaseSrc * src)
 
   gst_caps_append_structure (capslist,
       gst_structure_new ("video/x-raw-yuv",
-          "format",
-          GST_TYPE_FOURCC,
-          format, "width",
-          GST_TYPE_INT_RANGE, 16,
-          G_MAXINT, "height",
-          GST_TYPE_INT_RANGE, 16,
-          G_MAXINT, "framerate",
-          GST_TYPE_FRACTION_RANGE,
-          0, 1, 100, 1, "pixel-aspect-ratio",
-          GST_TYPE_FRACTION_RANGE, 0, 1, 100, 1, NULL));
-
+      	"format",	GST_TYPE_FOURCC,	format,
+      	"width",	G_TYPE_INT,			640,
+      	"height",	G_TYPE_INT,			480,
+      	"framerate",			GST_TYPE_FRACTION_RANGE,
+      		0,1, 60,1,
+      	"pixel-aspect-ratio",	GST_TYPE_FRACTION_RANGE,
+      		0,1, 100,1,
+      	NULL));
 
 
   return capslist;

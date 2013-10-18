@@ -42,6 +42,10 @@
 #ifndef _MFW_GST_V4LSRC_H_
 #define _MFW_GST_V4LSRC_H_
 
+#include <gst/gst.h>
+#include <gst/base/gstpushsrc.h>
+#include <gst/gstbuffer.h>
+
 /*=============================================================================
                                 CONSTANTS
 =============================================================================*/
@@ -78,37 +82,53 @@ G_BEGIN_DECLS
 =============================================================================*/
     typedef struct MFW_GST_V4LSRC_INFO_S
 {
-
-  GstPushSrc element;
-  gint capture_width;           /* width to be captured */
-  gint capture_height;          /* height to be captured */
-  gint rotate;
-  gint crop_pixel;
-  gint fps_n;
-  gint fps_d;
-  GstBuffer **buffers;
-  void **buf_pools;
+  /* GLiB OO stuff */
+  GstPushSrc element; /* super type */
   GstElementClass *parent_class;
-  guint32 offset;
+
+  /* video device info */
+  char *devicename;
+  gint fd_v4l; /* file descriptor */
+
+  /* image format */
+  /* TODO there are GST structs for this! */
+  gint capture_mode;
+  gint capture_width;
+  gint capture_height;
+  gint rotate; /* ? */
+  gint crop_pixel; /* ? */
+
+  /* sensor data */
+  gint sensor_width;
+  gint sensor_height;
+
+  /* fps data */
+  /* TODO there are V4L2 structs for this! */
+  GstClockTime time_per_frame;
+  GstClockTime last_ts;
+  gint fps_n;   /* fps numerator */
+  gint fps_d;   /* fps denominator */
+
+  /* buffer stuff(er)s */
+  GstBuffer ** buffers;
+  void **buf_pools;
   guint32 buffer_size;
-  guint32 count;
+  GList *free_pool; /* pool for v4l buffers. */
+  int queue_size;   /* v4l request buffer number */
+
+  /* preview (?) */
   gboolean preview;
   gint preview_width;
   gint preview_height;
   gint preview_top;
   gint preview_left;
-  gint fd_v4l;
-  gint sensor_width;
-  gint sensor_height;
-  GstClockTime time_per_frame;
-  GstClockTime last_ts;
-  gint capture_mode;
+
+  /* misc/unknown (to me) */
+  guint32 offset;
+  guint32 count;
   gint input;
   gboolean bg;
-  char *devicename;
   int g_display_lcd;
-  int queue_size;               /* v4l request buffer number */
-  GList *free_pool;             /* pool for v4l buffers. */
   gboolean start;
 } MFWGstV4LSrc;
 
@@ -134,13 +154,6 @@ struct _MFWGstV4LSrcBuffer
   MFWGstV4LSrc *v4lsrccontext;
   gint num;
 };
-
-
-
-
-
-
-
 
 
 /*=============================================================================
