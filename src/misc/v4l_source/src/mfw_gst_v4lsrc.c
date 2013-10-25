@@ -1017,6 +1017,8 @@ mfw_gst_v4lsrc_start (GstBaseSrc * src)
   }
 
   if (TRUE == v4l_src->preview) {
+    GST_DEBUG ("generating preview");
+
     g_display_width = v4l_src->preview_width;
     g_display_height = v4l_src->preview_height;
     g_display_top = v4l_src->preview_top;
@@ -1070,8 +1072,8 @@ mfw_gst_v4lsrc_start (GstBaseSrc * src)
       fb_v4l2.flags = V4L2_FBUF_FLAG_PRIMARY;
       fb_v4l2.base = (void *) fix.smem_start;
     } else {
-      /* alpha blending in done in case of display happeing both in the 
-         back ground and foreground simultaneously */
+      /* alpha blending is done in case of display happening both in the 
+         background and foreground simultaneously */
       alpha.alpha = 0;
       alpha.enable = 1;
       if (ioctl (fd_fb, MXCFB_SET_GBL_ALPHA, &alpha) < 0) {
@@ -1330,16 +1332,29 @@ mfw_gst_v4lsrc_get_caps (GstBaseSrc * src)
 
   capslist = gst_caps_new_empty ();
 
+  /* VGA YUV */
   gst_caps_append_structure (capslist,
       gst_structure_new ("video/x-raw-yuv",
-      	"format",	GST_TYPE_FOURCC,	format,
-      	"width",	G_TYPE_INT,			640,
-      	"height",	G_TYPE_INT,			480,
-      	"framerate",			GST_TYPE_FRACTION_RANGE,
-      		0,1, 60,1,
-      	"pixel-aspect-ratio",	GST_TYPE_FRACTION_RANGE,
+      	"format",	GST_TYPE_FOURCC,		format,
+      	"width",	G_TYPE_INT,					640,
+      	"height",	G_TYPE_INT,					480,
+      	"framerate",									GST_TYPE_FRACTION_RANGE,
+      		0,1, 30,1,
+      	"pixel-aspect-ratio",					GST_TYPE_FRACTION_RANGE,
       		0,1, 100,1,
-      	NULL));
+      NULL));
+
+  /* QVGA YUV */
+  gst_caps_append_structure (capslist, 
+    gst_structure_new ("video/x-raw-yuv", 
+      "format", GST_TYPE_FOURCC,     format,
+      "width",  G_TYPE_INT,          320,
+      "height", G_TYPE_INT,          240,
+      "framerate",                   GST_TYPE_FRACTION_RANGE,
+        0,1, 60,1,
+      "pixel-aspect-ratio",          GST_TYPE_FRACTION_RANGE,
+        0,1, 100,1,
+    NULL));
 
 
   return capslist;
