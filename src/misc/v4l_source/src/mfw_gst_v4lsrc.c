@@ -321,6 +321,8 @@ mfw_gst_v4lsrc_start_capturing (MFWGstV4LSrc * v4l_src)
   MFWGstV4LSrcBuffer *v4lsrc_buf = NULL;
   enum v4l2_buf_type type;
 
+  GST_DEBUG("Telling V4L2 driver to capture video");
+
   v4l_src->buffers = g_malloc (v4l_src->queue_size * sizeof (GstBuffer *));
   // query for v4l_src->queue_size number of buffers to store the captured data 
   for (i = 0; i < v4l_src->queue_size; i++) {
@@ -800,6 +802,11 @@ static gboolean
 mfw_gst_v4lsrc_set_caps (GstBaseSrc * src, GstCaps * caps)
 {
   MFWGstV4LSrc *v4l_src = MFW_GST_V4LSRC (src);
+
+  GST_DEBUG("setting caps on device (not really)");
+  GST_DEBUG("adjacent pad is %" GST_PTR_FORMAT, src);
+  GST_DEBUG("caps to set are %" GST_PTR_FORMAT, caps);
+
   return TRUE;
 }
 
@@ -1009,6 +1016,8 @@ mfw_gst_v4lsrc_start (GstBaseSrc * src)
   int g_display_height = 0;
   int g_display_top = 0;
   int g_display_left = 0;
+
+  GST_DEBUG("starting video capture");
 
   v4l_src->fd_v4l = mfw_gst_v4lsrc_capture_setup (v4l_src);
   if (v4l_src->fd_v4l <= 0) {
@@ -1319,7 +1328,7 @@ IMPORTANT NOTES:    None
 static GstCaps *
 mfw_gst_v4lsrc_get_caps (GstBaseSrc * src)
 {
-  GstCaps *list;
+  GstCaps *list; /* what was this supposed to be for? the *real* caps? */
   MFWGstV4LSrc *v4l_src = MFW_GST_V4LSRC (src);
   GstCaps *capslist;
   GstPadTemplate *src_template = NULL;
@@ -1356,6 +1365,7 @@ mfw_gst_v4lsrc_get_caps (GstBaseSrc * src)
         0,1, 100,1,
     NULL));
 
+  GST_DEBUG ("providing (hard-coded) caps: %" GST_PTR_FORMAT, capslist);
 
   return capslist;
 }
@@ -1387,6 +1397,8 @@ mfw_gst_v4lsrc_fixate (GstPad * pad, GstCaps * caps)
   guint32 fourcc = GST_MAKE_FOURCC ('N', 'V', '1', '2');
 #endif
 
+  GST_DEBUG("asked to fixate caps (was necessary)");
+
   const GValue *v = NULL;
   for (i = 0; i < gst_caps_get_size (caps); ++i) {
     structure = gst_caps_get_structure (caps, i);
@@ -1401,7 +1413,7 @@ mfw_gst_v4lsrc_fixate (GstPad * pad, GstCaps * caps)
 
     gst_structure_set (structure, "format", GST_TYPE_FOURCC, fourcc, NULL);
   }
-  GST_INFO ("capture: %d, %d, fixrate :%s\n", v4l_src->capture_width,
+  GST_INFO ("capture: %d, %d, fixate :%s\n", v4l_src->capture_width,
       v4l_src->capture_height, gst_caps_to_string (caps));
   gst_object_unref (v4l_src);
 
