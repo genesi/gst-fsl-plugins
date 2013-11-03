@@ -106,8 +106,8 @@ G_BEGIN_DECLS
   /* TODO there are V4L2 structs for this! */
   GstClockTime time_per_frame;
   GstClockTime last_ts;
-  gint fps_n;   /* fps numerator */
-  gint fps_d;   /* fps denominator */
+  gint fps_n;   /* fps numerator */   /* TODO fps_x is mislabled! it's usage is actually time_per_frame */
+  gint fps_d;   /* fps denominator */ /* all the more reason to replace with struct v4l2_fract */
 
   /* buffer stuff(er)s */
   GstBuffer ** buffers;
