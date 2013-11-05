@@ -399,7 +399,9 @@ mfw_gst_v4lsrc_start_capturing (MFWGstV4LSrc * v4l_src)
 
   v4l_src->start = TRUE;
   v4l_src->time_per_frame =
-	  gst_util_uint64_scale_int (GST_SECOND, v4l_src->fps_d, v4l_src->fps_n);
+	  gst_util_uint64_scale_int (GST_SECOND, 
+	  	v4l_src->frame_timing.seconds.numerator,
+	  	v4l_src->frame_timing.seconds.denominator);
   GST_DEBUG (">>V4L_SRC: time per frame %d", (guint32) v4l_src->time_per_frame);
   v4l_src->last_ts = 0;
   return 0;
@@ -532,8 +534,10 @@ mfw_gst_v4lsrc_capture_setup (MFWGstV4LSrc * v4l_src)
 
 
   parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-  parm.parm.capture.timeperframe.numerator = v4l_src->fps_n;
-  parm.parm.capture.timeperframe.denominator = v4l_src->fps_d;
+  parm.parm.capture.timeperframe.numerator = 
+		v4l_src->frame_timing.seconds.numerator;
+  parm.parm.capture.timeperframe.denominator =
+ 		v4l_src->frame_timing.seconds.denominator;
   parm.parm.capture.capturemode = v4l_src->capture_mode;
 
   input = v4l_src->input;
@@ -649,12 +653,16 @@ mfw_gst_v4lsrc_set_property (GObject * object, guint prop_id,
 	  GST_DEBUG ("crop_pixel=%d", v4l_src->crop_pixel);
 	  break;
 	case MFW_V4L_SRC_FRAMERATE_NUM:
-	  v4l_src->fps_n = g_value_get_int (value);
-	  GST_DEBUG ("framerate numerator =%d", v4l_src->fps_n);
+	  v4l_src->frame_timing.frequency.numerator = 
+	  		g_value_get_int (value);
+	  GST_DEBUG ("framerate numerator =%d",
+	  		v4l_src->frame_timing.frequency.numerator);
 	  break;
 	case MFW_V4L_SRC_FRAMERATE_DEN:
-	  v4l_src->fps_d = g_value_get_int (value);
-	  GST_DEBUG ("framerate denominator=%d", v4l_src->fps_d);
+	  v4l_src->frame_timing.frequency.denominator = 
+	  		g_value_get_int (value);
+	  GST_DEBUG ("framerate denominator=%d",
+	  		v4l_src->frame_timing.frequency.denominator);
 	  break;
 #if 0
 	case MFW_V4L_SRC_SENSOR_WIDTH:
@@ -757,10 +765,10 @@ mfw_gst_v4lsrc_get_property (GObject * object, guint prop_id,
 	  g_value_set_int (value, v4l_src->crop_pixel);
 	  break;
 	case MFW_V4L_SRC_FRAMERATE_NUM:
-	  g_value_set_int (value, v4l_src->fps_n);
+	  g_value_set_int (value, v4l_src->frame_timing.frequency.numerator);
 	  break;
 	case MFW_V4L_SRC_FRAMERATE_DEN:
-	  g_value_set_int (value, v4l_src->fps_d);
+	  g_value_set_int (value, v4l_src->frame_timing.frequency.denominator);
 	  break;
 
 #if 0
@@ -871,10 +879,12 @@ mfw_gst_v4lsrc_pre_capture_setup (MFWGstV4LSrc *v4l_src, int mode)
 	v4l_src->capture_mode	= mode;
 	v4l_src->capture_width	= mode_widths[mode];
 	v4l_src->capture_height	= mode_heights[mode];
-	v4l_src->fps_n 			= mode_timeperframe_n[mode];	/* TODO these look wrong because the plugin names them wrong */
-	v4l_src->fps_d 			= mode_timeperframe_d[mode];
+	v4l_src->frame_timing.seconds.numerator		= mode_timeperframe_n[mode];
+	v4l_src->frame_timing.seconds.denominator	= mode_timeperframe_d[mode];
 
-	GST_DEBUG ("set time per frame to %d/%ds", v4l_src->fps_n, v4l_src->fps_d);
+	GST_DEBUG ("set time per frame to %d/%ds", 
+		v4l_src->frame_timing.seconds.numerator,
+		v4l_src->frame_timing.seconds.denominator);
 
 	/* if we were capturing before, resume */
 	if (was_capturing) {
@@ -1519,7 +1529,8 @@ mfw_gst_v4lsrc_fixate (GstPad * pad, GstCaps * caps)
 	gst_structure_fixate_field_nearest_int (structure, "height",
 		v4l_src->capture_height);
 	gst_structure_fixate_field_nearest_fraction (structure, "framerate",
-		v4l_src->fps_n, v4l_src->fps_d); /* TODO this is wrong */
+		v4l_src->frame_timing.frequency.numerator,
+		v4l_src->frame_timing.frequency.denominator);
 	gst_structure_fixate_field_nearest_fraction (structure,
 		"pixel-aspect-ratio", 1, 1);
 
@@ -1551,10 +1562,10 @@ IMPORTANT NOTES:    None
 static void
 mfw_gst_v4lsrc_init (MFWGstV4LSrc * v4l_src, MFWGstV4LSrcClass * klass)
 {
-  v4l_src->capture_width = 176;
-  v4l_src->capture_height = 144;
-  v4l_src->fps_n = 30;
-  v4l_src->fps_d = 1;
+  v4l_src->capture_width	= 176;
+  v4l_src->capture_height	= 144;
+  v4l_src->frame_timing.frequency.numerator		= 30;
+  v4l_src->frame_timing.frequency.denominator	= 1;
   v4l_src->fd_v4l = -1;
   v4l_src->count = 0;
   v4l_src->buffer_size = 0;

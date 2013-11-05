@@ -77,10 +77,24 @@ G_BEGIN_DECLS
     (G_TYPE_CHECK_INSTANCE_CAST ((obj), MFW_GST_TYPE_V4LSRC_BUFFER, MFWGstV4LSrcBuffer))
 #define MFW_GST_V4LSRC_BUFFER_GET_CLASS(obj)  \
     (G_TYPE_INSTANCE_GET_CLASS ((obj), MFW_GST_TYPE_V4LSRC_BUFFER, MFWGstV4LSrcBufferClass))
+
 /*=============================================================================
                   STRUCTURES AND OTHER TYPEDEFS
 =============================================================================*/
-    typedef struct MFW_GST_V4LSRC_INFO_S
+
+/* These are purposely flipped from each other so they can nicely cohabitate in a union */
+union frame_timing_data {
+	struct {
+		uint32_t numerator;
+		uint32_t denominator;
+	} frequency;
+	struct {
+		uint32_t denominator;
+		uint32_t numerator;
+	} seconds;
+};
+
+typedef struct MFW_GST_V4LSRC_INFO_S
 {
   /* GLiB OO stuff */
   GstPushSrc element; /* super type */
@@ -106,6 +120,8 @@ G_BEGIN_DECLS
   /* TODO there are V4L2 structs for this! */
   GstClockTime time_per_frame;
   GstClockTime last_ts;
+  union frame_timing_data frame_timing;
+  /* TODO deprecated */
   gint fps_n;   /* fps numerator */   /* TODO fps_x is mislabled! it's usage is actually time_per_frame */
   gint fps_d;   /* fps denominator */ /* all the more reason to replace with struct v4l2_fract */
 
