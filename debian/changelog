@@ -1,3 +1,9 @@
+gst-fsl-plugin (3.0.1-0genesi5) maverick; urgency=low
+
+  * mfw_v4lsrc: hard-coded modes & enabled mode select for ov7690 camera, fixes
+
+ -- Chris Jenkins <chris.jenkins@genesi-usa.com>  Thu, 7 Nov 2013 13:30:00 +0200
+
 gst-fsl-plugin (3.0.1-0genesi4) maverick; urgency=low
 
   * fixes to mfw_v4lsrc
